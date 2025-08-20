@@ -18,12 +18,12 @@ type FilterType = "all" | "pending" | "completed";
 type SortType = "date" | "title";
 
 export function TodoList() {
-	const [filter, setFilter] = useState<FilterType>("all");
-	const [sort, setSort] = useState<SortType>("date");
+	const [filter] = useState<FilterType>("all");
+	const [sort] = useState<SortType>("date");
 	const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
 	// React Query hooks
-	const { data: todos = [], isLoading, isRefetching, refetch } = useTodos();
+	const { data: todos = [], isLoading } = useTodos();
 	const createTodoMutation = useCreateTodo();
 	const updateTodoMutation = useUpdateTodo();
 	const deleteTodoMutation = useDeleteTodo();
@@ -64,10 +64,6 @@ export function TodoList() {
 		if (todo) {
 			handleUpdateTodo(id, { completed: !todo.completed });
 		}
-	};
-
-	const handleRefresh = () => {
-		refetch();
 	};
 
 	const handleMoveUp = async (todoId: string) => {
@@ -160,7 +156,7 @@ export function TodoList() {
 								onToggle={handleToggleTodo}
 								onMoveUp={handleMoveUp}
 								onMoveDown={handleMoveDown}
-								loading={updateTodoMutation.isPending || isRefetching}
+								loading={updateTodoMutation.isPending}
 								deleting={deletingIds.has(todo.id)}
 								canMoveUp={index > 0}
 								canMoveDown={index < filteredTodos.length - 1}

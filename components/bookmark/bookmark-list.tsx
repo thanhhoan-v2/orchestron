@@ -27,8 +27,7 @@ import {
 	useDeleteBookmark,
 	useMoveBookmark,
 	useParentOptions,
-	useReorderBookmarks,
-	useUpdateBookmark,
+	useUpdateBookmark
 } from "@/lib/hooks/use-bookmarks";
 import {
 	Bookmark as BookmarkIcon,
@@ -43,7 +42,7 @@ import { useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
 
 export function BookmarkList() {
-	const [selectedBookmark, setSelectedBookmark] = useState<
+	const [, setSelectedBookmark] = useState<
 		TreeDataItem | undefined
 	>();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -69,15 +68,12 @@ export function BookmarkList() {
 	const {
 		data: bookmarks = [],
 		isLoading,
-		isRefetching,
-		refetch,
 	} = useBookmarks();
-	const { data: parentOptions = [], isLoading: parentOptionsLoading } =
+	const { data: parentOptions = [] } =
 		useParentOptions();
 	const createBookmarkMutation = useCreateBookmark();
 	const updateBookmarkMutation = useUpdateBookmark();
 	const deleteBookmarkMutation = useDeleteBookmark();
-	const reorderBookmarksMutation = useReorderBookmarks();
 	const moveBookmarkMutation = useMoveBookmark();
 
 	const handleCreateBookmark = async (bookmarkData: {
@@ -213,7 +209,6 @@ export function BookmarkList() {
 		}
 
 		// Determine if we're moving to a different parent or reordering within same parent
-		const sourceParentId = sourceBookmark.parent_id;
 		const targetParentId = targetBookmark.parent_id;
 		const targetIsFolder = !targetBookmark.url;
 
@@ -487,7 +482,7 @@ export function BookmarkList() {
 					<DialogHeader>
 						<DialogTitle>Delete Bookmark</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete "{deletingBookmark?.title}"?
+							Are you sure you want to delete &quot;{deletingBookmark?.title}&quot;?
 							{deletingBookmark?.children &&
 								deletingBookmark.children.length > 0 && (
 									<span className="block mt-2 text-destructive">
