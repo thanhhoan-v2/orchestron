@@ -19,7 +19,6 @@ type SortType = "date" | "title";
 
 export function TodoList() {
 	const [filter] = useState<FilterType>("all");
-	const [sort] = useState<SortType>("date");
 	const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
 	// React Query hooks

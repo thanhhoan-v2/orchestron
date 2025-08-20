@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const todo = await TodoService.getTodoById(params.id);
+    const { id } = await params;
+    const todo = await TodoService.getTodoById(id);
     if (!todo) {
       return NextResponse.json(
         { error: 'Todo not found' },
@@ -25,9 +26,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const input: UpdateTodoInput = {
       title: body.title,
@@ -35,7 +37,7 @@ export async function PATCH(
       completed: body.completed,
     };
 
-    const todo = await TodoService.updateTodo(params.id, input);
+    const todo = await TodoService.updateTodo(id, input);
     if (!todo) {
       return NextResponse.json(
         { error: 'Todo not found' },
@@ -54,21 +56,22 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('DELETE request for todo ID:', params.id);
+    const { id } = await params;
+    console.log('DELETE request for todo ID:', id);
     console.log('Database URL configured:', !!process.env.DATABASE_URL);
     
     // Ensure the database table exists
     await TodoService.initializeDatabase();
     console.log('Database initialization completed');
     
-    const success = await TodoService.deleteTodo(params.id);
+    const success = await TodoService.deleteTodo(id);
     console.log('Delete operation result:', success);
     
     if (!success) {
-      console.log('Todo not found in database for ID:', params.id);
+      console.log('Todo not found in database for ID:', id);
       return NextResponse.json(
         { error: 'Todo not found' },
         { status: 404 }
