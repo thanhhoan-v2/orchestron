@@ -2,43 +2,42 @@
 
 import { TreeDataItem, TreeView } from "@/components/common/tree-view";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Bookmark } from "@/lib/db";
 import {
-    useBookmarks,
-    useCreateBookmark,
-    useDeleteBookmark,
-    useMoveBookmark,
-    useParentOptions,
-    useReorderBookmarks,
-    useUpdateBookmark,
+	useBookmarks,
+	useCreateBookmark,
+	useDeleteBookmark,
+	useMoveBookmark,
+	useParentOptions,
+	useReorderBookmarks,
+	useUpdateBookmark,
 } from "@/lib/hooks/use-bookmarks";
 import {
-    Bookmark as BookmarkIcon,
-    Folder,
-    Link,
-    Pen,
-    Plus,
-    RefreshCw,
-    X,
+	Bookmark as BookmarkIcon,
+	Folder,
+	Link,
+	Pen,
+	Plus,
+	RefreshCw,
+	X,
 } from "lucide-react";
 import { useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
@@ -148,14 +147,18 @@ export function BookmarkList() {
 		targetItem: TreeDataItem
 	) => {
 		console.log("Drag and drop:", sourceItem.name, "to", targetItem.name);
-		
+
 		// Prevent dragging item onto itself
 		if (sourceItem.id === targetItem.id) {
 			return;
 		}
-		
+
 		// Helper function to check if target is a descendant of source
-		const isDescendant = (parentId: string, potentialDescendantId: string, bookmarkList: Bookmark[]): boolean => {
+		const isDescendant = (
+			parentId: string,
+			potentialDescendantId: string,
+			bookmarkList: Bookmark[]
+		): boolean => {
 			const findDescendants = (id: string): string[] => {
 				const descendants: string[] = [];
 				for (const bookmark of bookmarkList) {
@@ -168,9 +171,12 @@ export function BookmarkList() {
 			};
 			return findDescendants(parentId).includes(potentialDescendantId);
 		};
-		
+
 		// Find the actual bookmark data for source and target
-		const findBookmarkById = (id: string, bookmarkList: Bookmark[]): Bookmark | null => {
+		const findBookmarkById = (
+			id: string,
+			bookmarkList: Bookmark[]
+		): Bookmark | null => {
 			for (const bookmark of bookmarkList) {
 				if (bookmark.id === id) return bookmark;
 				if (bookmark.children) {
@@ -182,7 +188,8 @@ export function BookmarkList() {
 		};
 
 		const sourceBookmark = findBookmarkById(sourceItem.id, bookmarks);
-		const targetBookmark = targetItem.id === "" ? null : findBookmarkById(targetItem.id, bookmarks);
+		const targetBookmark =
+			targetItem.id === "" ? null : findBookmarkById(targetItem.id, bookmarks);
 
 		if (!sourceBookmark) {
 			console.error("Source bookmark not found");
@@ -195,7 +202,7 @@ export function BookmarkList() {
 			moveBookmarkMutation.mutate({
 				sourceId: sourceItem.id,
 				targetId: "",
-				insertIndex: 0
+				insertIndex: 0,
 			});
 			return;
 		}
@@ -212,36 +219,44 @@ export function BookmarkList() {
 
 		if (targetIsFolder) {
 			// Check if we're trying to move a folder into itself or its descendant
-			if (targetItem.id !== "" && isDescendant(sourceItem.id, targetItem.id, bookmarks)) {
+			if (
+				targetItem.id !== "" &&
+				isDescendant(sourceItem.id, targetItem.id, bookmarks)
+			) {
 				console.warn("Cannot move folder into itself or its descendant");
 				return;
 			}
-			
+
 			// Dropping INTO a folder - move to become child of target
 			console.log("Moving into folder:", targetBookmark.title);
 			moveBookmarkMutation.mutate({
 				sourceId: sourceItem.id,
 				targetId: targetItem.id,
 				newParentId: targetItem.id,
-				insertIndex: 0 // Add at beginning of folder
+				insertIndex: 0, // Add at beginning of folder
 			});
 		} else {
 			// Dropping next to a link/bookmark - move to same parent as target
 			console.log("Moving next to item:", targetBookmark.title);
-			
+
 			// Find the target's siblings to determine insertion index
-			const targetParent = targetParentId ? findBookmarkById(targetParentId, bookmarks) : null;
-			const siblings = targetParent ? targetParent.children || [] : 
-				bookmarks.filter(b => !b.parent_id);
-			
-			const targetIndex = siblings.findIndex(sibling => sibling.id === targetItem.id);
+			const targetParent = targetParentId
+				? findBookmarkById(targetParentId, bookmarks)
+				: null;
+			const siblings = targetParent
+				? targetParent.children || []
+				: bookmarks.filter((b) => !b.parent_id);
+
+			const targetIndex = siblings.findIndex(
+				(sibling) => sibling.id === targetItem.id
+			);
 			const insertIndex = targetIndex >= 0 ? targetIndex + 1 : 0;
 
 			moveBookmarkMutation.mutate({
 				sourceId: sourceItem.id,
 				targetId: targetItem.id,
 				newParentId: targetParentId,
-				insertIndex
+				insertIndex,
 			});
 		}
 	};
@@ -322,12 +337,12 @@ export function BookmarkList() {
 
 	if (isLoading) {
 		return (
-			<Card className="w-full">
-				<CardContent className="flex justify-center items-center p-8">
+			<div className="flex justify-center items-center p-8 w-full">
+				<div className="flex flex-col justify-center items-center gap-3 p-8">
 					<RefreshCw className="mr-2 w-6 h-6 animate-spin" />
-					Loading bookmarks...
-				</CardContent>
-			</Card>
+					<div>Loading bookmarks</div>
+				</div>
+			</div>
 		);
 	}
 

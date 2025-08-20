@@ -2,8 +2,14 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Todo } from "@/lib/db";
-import { useCreateTodo, useDeleteTodo, useReorderTodos, useTodos, useUpdateTodo } from "@/lib/hooks/use-todos";
-import { Circle, RefreshCw } from "lucide-react";
+import {
+	useCreateTodo,
+	useDeleteTodo,
+	useReorderTodos,
+	useTodos,
+	useUpdateTodo,
+} from "@/lib/hooks/use-todos";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { TodoForm } from "./todo-form";
 import { TodoItem } from "./todo-item";
@@ -15,7 +21,7 @@ export function TodoList() {
 	const [filter, setFilter] = useState<FilterType>("all");
 	const [sort, setSort] = useState<SortType>("date");
 	const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-	
+
 	// React Query hooks
 	const { data: todos = [], isLoading, isRefetching, refetch } = useTodos();
 	const createTodoMutation = useCreateTodo();
@@ -39,12 +45,12 @@ export function TodoList() {
 		if (deletingIds.has(id)) return;
 
 		// Mark as deleting
-		setDeletingIds(prev => new Set(prev).add(id));
+		setDeletingIds((prev) => new Set(prev).add(id));
 
 		deleteTodoMutation.mutate(id, {
 			onSettled: () => {
 				// Remove from deleting set regardless of success or failure
-				setDeletingIds(prev => {
+				setDeletingIds((prev) => {
 					const newSet = new Set(prev);
 					newSet.delete(id);
 					return newSet;
@@ -65,7 +71,7 @@ export function TodoList() {
 	};
 
 	const handleMoveUp = async (todoId: string) => {
-		const currentIndex = filteredTodos.findIndex(todo => todo.id === todoId);
+		const currentIndex = filteredTodos.findIndex((todo) => todo.id === todoId);
 		if (currentIndex <= 0) return; // Already at top or not found
 
 		const currentTodo = filteredTodos[currentIndex];
@@ -74,14 +80,14 @@ export function TodoList() {
 		// Swap the order values between the two todos
 		const todoOrders = [
 			{ id: currentTodo.id, order: previousTodo.order },
-			{ id: previousTodo.id, order: currentTodo.order }
+			{ id: previousTodo.id, order: currentTodo.order },
 		];
 
 		reorderTodosMutation.mutate(todoOrders);
 	};
 
 	const handleMoveDown = async (todoId: string) => {
-		const currentIndex = filteredTodos.findIndex(todo => todo.id === todoId);
+		const currentIndex = filteredTodos.findIndex((todo) => todo.id === todoId);
 		if (currentIndex >= filteredTodos.length - 1 || currentIndex === -1) return; // Already at bottom or not found
 
 		const currentTodo = filteredTodos[currentIndex];
@@ -90,7 +96,7 @@ export function TodoList() {
 		// Swap the order values between the two todos
 		const todoOrders = [
 			{ id: currentTodo.id, order: nextTodo.order },
-			{ id: nextTodo.id, order: currentTodo.order }
+			{ id: nextTodo.id, order: currentTodo.order },
 		];
 
 		reorderTodosMutation.mutate(todoOrders);
@@ -109,10 +115,10 @@ export function TodoList() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center min-h-[400px]">
-				<div className="space-y-4 text-center">
-					<RefreshCw className="mx-auto w-8 h-8 text-muted-foreground animate-spin" />
-					<p className="text-muted-foreground">Loading todos...</p>
+			<div className="flex justify-center items-center w-full min-h-[400px]">
+				<div className="flex flex-col justify-center items-center gap-3 p-8">
+					<RefreshCw className="size-6 animate-spin" />
+					<p>Loading todos</p>
 				</div>
 			</div>
 		);
@@ -123,7 +129,10 @@ export function TodoList() {
 			{/* Stats */}
 
 			{/* Create Todo Form */}
-			<TodoForm onSubmit={handleCreateTodo} loading={createTodoMutation.isPending} />
+			<TodoForm
+				onSubmit={handleCreateTodo}
+				loading={createTodoMutation.isPending}
+			/>
 
 			{/* Todo List */}
 			<div className="space-y-4 max-h-[800px] overflow-y-auto">
@@ -131,7 +140,6 @@ export function TodoList() {
 					<Card>
 						<CardContent className="p-8 text-center">
 							<div className="space-y-2">
-								<Circle className="mx-auto w-12 h-12 text-muted-foreground" />
 								<h3 className="font-medium text-lg">No todos found</h3>
 								<p className="text-muted-foreground">
 									{filter === "all"
