@@ -13,7 +13,7 @@ export default function Home() {
 				<ReminderList />
 			</div>
 
-			<div className="flex flex-col justify-center items-center gap-8 pt-5">
+			<div className="flex flex-col justify-center items-center gap-8 pt-5 transition-all duration-300">
 				<Image
 					src="/ascii-art-1.png"
 					alt="ascii-art-1"

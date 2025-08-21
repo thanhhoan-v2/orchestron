@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Todo } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import {
-	ChevronDown,
-	ChevronUp,
+	ChevronDownIcon,
+	ChevronUpIcon,
 	PenIcon,
 	RefreshCw,
 	Save,
@@ -110,28 +110,6 @@ export function TodoItem({
 		>
 			<CardContent>
 				<div className="flex items-center gap-3">
-					{/* Move Up/Down Controls */}
-					<div className="flex flex-col gap-1 mt-1">
-						<Button
-							variant="ghost"
-							size="sm"
-							className="hover:bg-muted p-0 w-6 h-4"
-							onClick={() => onMoveUp(todo.id)}
-							disabled={!canMoveUp || loading}
-						>
-							<ChevronUp className="w-3 h-3" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="hover:bg-muted p-0 w-6 h-4"
-							onClick={() => onMoveDown(todo.id)}
-							disabled={!canMoveDown || loading}
-						>
-							<ChevronDown className="w-3 h-3" />
-						</Button>
-					</div>
-
 					<div className="flex justify-between gap-2 w-full">
 						<div className="flex flex-col gap-2">
 							<div className="flex flex-1 items-center gap-2 min-w-0">
@@ -164,28 +142,52 @@ export function TodoItem({
 						</div>
 
 						<div className="flex gap-2">
-							<Button
-								variant="ghost"
-								size="sm"
-								className="p-0 w-8 h-8"
-								onClick={() => setIsEditing(true)}
-							>
-								<PenIcon className="w-4 h-4" />
-							</Button>
+							<div className="flex gap-2 border h-fit">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="p-0 w-8 h-8"
+									onClick={() => onMoveDown(todo.id)}
+									disabled={!canMoveDown || loading}
+								>
+									<ChevronDownIcon className="w-4 h-4" />
+								</Button>
 
-							<Button
-								variant="ghost"
-								size="sm"
-								className="p-0 w-8 h-8"
-								onClick={() => onDelete(todo.id)}
-								disabled={deleting || loading}
-							>
-								{deleting ? (
-									<RefreshCw className="w-4 h-4 animate-spin" />
-								) : (
-									<XIcon className="w-4 h-4" />
-								)}
-							</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									className="p-0 w-8 h-8"
+									onClick={() => onMoveUp(todo.id)}
+									disabled={!canMoveUp || loading}
+								>
+									<ChevronUpIcon className="w-4 h-4" />
+								</Button>
+							</div>
+
+							<div className="flex gap-2 border h-fit">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="p-0 w-8 h-8"
+									onClick={() => setIsEditing(true)}
+								>
+									<PenIcon className="w-4 h-4" />
+								</Button>
+
+								<Button
+									variant="ghost"
+									size="sm"
+									className="p-0 w-8 h-8"
+									onClick={() => onDelete(todo.id)}
+									disabled={deleting || loading}
+								>
+									{deleting ? (
+										<RefreshCw className="w-4 h-4 animate-spin" />
+									) : (
+										<XIcon className="w-4 h-4" />
+									)}
+								</Button>
+							</div>
 						</div>
 					</div>
 				</div>
