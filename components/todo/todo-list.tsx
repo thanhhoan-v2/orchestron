@@ -14,7 +14,6 @@ import { TodoForm } from "./todo-form";
 import { TodoItem } from "./todo-item";
 
 type FilterType = "all" | "pending" | "completed";
-type SortType = "date" | "title";
 
 export function TodoList() {
 	const [filter] = useState<FilterType>("all");
