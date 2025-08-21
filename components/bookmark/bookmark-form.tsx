@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useParentOptions } from "@/lib/hooks/use-bookmarks";
@@ -94,8 +94,9 @@ export function BookmarkForm({ onSubmit, loading, preSelectedParentId, isDialogO
 						setIsOpen(true);
 					}
 				}}
-				className="justify-center gap-2 w-full"
+				className="justify-center gap-2 border-b-2 w-full"
 				size="lg"
+				variant="ghost"
 			>
 				<Plus className="w-4 h-4" />
 				Add New Bookmark

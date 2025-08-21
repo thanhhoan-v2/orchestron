@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Todo } from "@/lib/db";
 import {
 	useCreateTodo,
@@ -120,7 +119,7 @@ export function TodoList() {
 	}
 
 	return (
-		<div className="space-y-6 mx-auto p-5 w-full">
+		<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
 			{/* Stats */}
 
 			{/* Create Todo Form */}
@@ -132,8 +131,8 @@ export function TodoList() {
 			{/* Todo List */}
 			<div className="space-y-4 max-h-[800px] overflow-y-auto">
 				{filteredTodos.length === 0 ? (
-					<Card>
-						<CardContent className="p-8 text-center">
+					<div>
+						<div className="p-8 text-center">
 							<div className="space-y-2">
 								<h3 className="font-medium text-lg">No todos found</h3>
 								<p className="text-muted-foreground">
@@ -142,8 +141,8 @@ export function TodoList() {
 										: `No ${filter} todos at the moment.`}
 								</p>
 							</div>
-						</CardContent>
-					</Card>
+						</div>
+					</div>
 				) : (
 					<div className="space-y-4">
 						{filteredTodos.map((todo, index) => (

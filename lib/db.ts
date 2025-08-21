@@ -57,6 +57,27 @@ export interface UpdateBookmarkInput {
   order?: number;
 }
 
+export interface Reminder {
+  id: string;
+  title: string;
+  due_date: string;
+  days_remaining: number;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateReminderInput {
+  title: string;
+  due_date: string;
+}
+
+export interface UpdateReminderInput {
+  title?: string;
+  due_date?: string;
+  order?: number;
+}
+
 export class TodoService {
   // Initialize the database table if it doesn't exist
   static async initializeDatabase(): Promise<void> {
@@ -561,5 +582,193 @@ export class BookmarkService {
       title: row.title,
       level: row.level
     }));
+  }
+}
+
+export class ReminderService {
+  // Helper method to calculate days remaining
+  private static calculateDaysRemaining(dueDate: string): number {
+    const today = new Date();
+    const due = new Date(dueDate);
+    
+    // Reset time to start of day for accurate day calculation
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }
+
+  // Initialize the database table if it doesn't exist
+  static async initializeDatabase(): Promise<void> {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS reminders (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          title TEXT NOT NULL,
+          due_date DATE NOT NULL,
+          "order" INTEGER DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
+      // Add order column if it doesn't exist (for existing databases)
+      try {
+        await sql`
+          ALTER TABLE reminders ADD COLUMN IF NOT EXISTS "order" INTEGER DEFAULT 0
+        `;
+        
+        // Set order for existing reminders if they don't have it
+        await sql`
+          UPDATE reminders 
+          SET "order" = EXTRACT(EPOCH FROM created_at)::INTEGER 
+          WHERE "order" = 0 OR "order" IS NULL
+        `;
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Order column migration info:', error);
+      }
+      console.log('Reminders database table initialized successfully');
+    } catch (error) {
+      console.error('Error initializing reminders database:', error);
+      throw error;
+    }
+  }
+
+  static async getAllReminders(): Promise<Reminder[]> {
+    const result = await sql`
+      SELECT 
+        id, 
+        title, 
+        due_date, 
+        "order",
+        created_at, 
+        updated_at 
+      FROM reminders 
+      ORDER BY due_date ASC, "order" ASC, created_at DESC
+    `;
+    
+    // Calculate days remaining in JavaScript
+    return result.map(row => ({
+      ...row,
+      days_remaining: this.calculateDaysRemaining(row.due_date)
+    })) as Reminder[];
+  }
+
+  static async getReminderById(id: string): Promise<Reminder | null> {
+    const result = await sql`
+      SELECT 
+        id, 
+        title, 
+        due_date, 
+        "order",
+        created_at, 
+        updated_at 
+      FROM reminders 
+      WHERE id = ${id}
+    `;
+    
+    if (!result[0]) return null;
+    
+    return {
+      ...result[0],
+      days_remaining: this.calculateDaysRemaining(result[0].due_date)
+    } as Reminder;
+  }
+
+  static async createReminder(input: CreateReminderInput): Promise<Reminder> {
+    // Get the maximum order value to place new reminder at the end
+    const maxOrderResult = await sql`
+      SELECT COALESCE(MAX("order"), 0) + 1 as next_order FROM reminders
+    `;
+    const nextOrder = maxOrderResult[0]?.next_order || 1;
+    
+    const result = await sql`
+      INSERT INTO reminders (title, due_date, "order")
+      VALUES (${input.title}, ${input.due_date}::DATE, ${nextOrder})
+      RETURNING 
+        id, 
+        title, 
+        due_date, 
+        "order",
+        created_at, 
+        updated_at
+    `;
+    
+    return {
+      ...result[0],
+      days_remaining: this.calculateDaysRemaining(result[0].due_date)
+    } as Reminder;
+  }
+
+  static async updateReminder(id: string, input: UpdateReminderInput): Promise<Reminder | null> {
+    // If no updates provided, return the existing reminder
+    if (Object.keys(input).length === 0) {
+      return await this.getReminderById(id);
+    }
+
+    const currentReminder = await this.getReminderById(id);
+    if (!currentReminder) return null;
+
+    const result = await sql`
+      UPDATE reminders 
+      SET 
+        title = ${input.title ?? currentReminder.title}, 
+        due_date = ${input.due_date ? sql`${input.due_date}::DATE` : sql`due_date`}, 
+        "order" = ${input.order ?? currentReminder.order},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING 
+        id, 
+        title, 
+        due_date, 
+        "order",
+        created_at, 
+        updated_at
+    `;
+    
+    if (!result[0]) return null;
+    
+    return {
+      ...result[0],
+      days_remaining: this.calculateDaysRemaining(result[0].due_date)
+    } as Reminder;
+  }
+
+  static async deleteReminder(id: string): Promise<boolean> {
+    try {
+      const existingReminder = await this.getReminderById(id);
+      if (!existingReminder) {
+        return false;
+      }
+      
+      await sql`
+        DELETE FROM reminders WHERE id = ${id}
+      `;
+      
+      const reminderAfterDelete = await this.getReminderById(id);
+      return reminderAfterDelete === null;
+    } catch (error) {
+      console.error('Error in deleteReminder:', error);
+      throw error;
+    }
+  }
+
+  static async reorderReminders(reminderOrders: { id: string; order: number }[]): Promise<void> {
+    try {
+      for (const { id, order } of reminderOrders) {
+        await sql`
+          UPDATE reminders 
+          SET "order" = ${order}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+        `;
+      }
+    } catch (error) {
+      console.error('Error reordering reminders:', error);
+      throw error;
+    }
   }
 }

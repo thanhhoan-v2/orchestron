@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Todo } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import {
-  ChevronDown,
-  ChevronUp,
-  PenIcon,
-  RefreshCw,
-  Save,
-  X,
-  XIcon,
+	ChevronDown,
+	ChevronUp,
+	PenIcon,
+	RefreshCw,
+	Save,
+	X,
+	XIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -138,12 +138,11 @@ export function TodoItem({
 								<Checkbox
 									checked={todo.completed}
 									onCheckedChange={() => onToggle(todo.id)}
-									className="mt-1"
 									disabled={loading}
 								/>
 								<h3
 									className={cn(
-										"font-medium text-2xl leading-tight",
+										"font-medium text-lg leading-tight",
 										todo.completed && "line-through text-muted-foreground"
 									)}
 								>

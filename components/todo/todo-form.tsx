@@ -39,8 +39,9 @@ export function TodoForm({ onSubmit, loading }: TodoFormProps) {
     return (
       <Button 
         onClick={() => setIsOpen(true)}
-        className="justify-center gap-2 w-full"
+        className="justify-center gap-2 border-b-2 w-full"
         size="lg"
+        variant="ghost"
       >
         <Plus className="w-4 h-4" />
         Add New Todo
