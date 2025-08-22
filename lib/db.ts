@@ -78,6 +78,26 @@ export interface UpdateReminderInput {
   order?: number;
 }
 
+export interface Fund {
+  id: string;
+  title: string;
+  price: string; // in VND stored as string for precision
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFundInput {
+  title: string;
+  price: string;
+}
+
+export interface UpdateFundInput {
+  title?: string;
+  price?: string;
+  order?: number;
+}
+
 export class TodoService {
   // Initialize the database table if it doesn't exist
   static async initializeDatabase(): Promise<void> {
@@ -768,6 +788,131 @@ export class ReminderService {
       }
     } catch (error) {
       console.error('Error reordering reminders:', error);
+      throw error;
+    }
+  }
+}
+
+export class FundService {
+  // Initialize the database table if it doesn't exist
+  static async initializeDatabase(): Promise<void> {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS funds (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          title TEXT NOT NULL,
+          price TEXT NOT NULL,
+          "order" INTEGER DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
+      // Add order column if it doesn't exist (for existing databases)
+      try {
+        await sql`
+          ALTER TABLE funds ADD COLUMN IF NOT EXISTS "order" INTEGER DEFAULT 0
+        `;
+        
+        // Set order for existing funds if they don't have it
+        await sql`
+          UPDATE funds 
+          SET "order" = EXTRACT(EPOCH FROM created_at)::INTEGER 
+          WHERE "order" = 0 OR "order" IS NULL
+        `;
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Order column migration info:', error);
+      }
+      console.log('Funds database table initialized successfully');
+    } catch (error) {
+      console.error('Error initializing funds database:', error);
+      throw error;
+    }
+  }
+
+  static async getAllFunds(): Promise<Fund[]> {
+    const result = await sql`
+      SELECT * FROM funds 
+      ORDER BY "order" ASC, created_at DESC
+    `;
+    return result as Fund[];
+  }
+
+  static async getFundById(id: string): Promise<Fund | null> {
+    const result = await sql`
+      SELECT * FROM funds WHERE id = ${id}
+    `;
+    return result[0] as Fund || null;
+  }
+
+  static async createFund(input: CreateFundInput): Promise<Fund> {
+    // Get the maximum order value to place new fund at the end
+    const maxOrderResult = await sql`
+      SELECT COALESCE(MAX("order"), 0) + 1 as next_order FROM funds
+    `;
+    const nextOrder = maxOrderResult[0]?.next_order || 1;
+    
+    const result = await sql`
+      INSERT INTO funds (title, price, "order")
+      VALUES (${input.title}, ${input.price}, ${nextOrder})
+      RETURNING *
+    `;
+    return result[0] as Fund;
+  }
+
+  static async updateFund(id: string, input: UpdateFundInput): Promise<Fund | null> {
+    // If no updates provided, return the existing fund
+    if (Object.keys(input).length === 0) {
+      return await this.getFundById(id);
+    }
+
+    const currentFund = await this.getFundById(id);
+    if (!currentFund) return null;
+
+    const result = await sql`
+      UPDATE funds 
+      SET 
+        title = ${input.title ?? currentFund.title}, 
+        price = ${input.price ?? currentFund.price}, 
+        "order" = ${input.order ?? currentFund.order},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return result[0] as Fund || null;
+  }
+
+  static async deleteFund(id: string): Promise<boolean> {
+    try {
+      const existingFund = await this.getFundById(id);
+      if (!existingFund) {
+        return false;
+      }
+      
+      await sql`
+        DELETE FROM funds WHERE id = ${id}
+      `;
+      
+      const fundAfterDelete = await this.getFundById(id);
+      return fundAfterDelete === null;
+    } catch (error) {
+      console.error('Error in deleteFund:', error);
+      throw error;
+    }
+  }
+
+  static async reorderFunds(fundOrders: { id: string; order: number }[]): Promise<void> {
+    try {
+      for (const { id, order } of fundOrders) {
+        await sql`
+          UPDATE funds 
+          SET "order" = ${order}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+        `;
+      }
+    } catch (error) {
+      console.error('Error reordering funds:', error);
       throw error;
     }
   }

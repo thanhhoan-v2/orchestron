@@ -1,5 +1,5 @@
 import { BookmarkList } from "@/components/bookmark/bookmark-list";
-import { ShortcutsHelp } from "@/components/common/shortcuts-help";
+import { FundsList } from "@/components/funds/funds-list";
 import { ReminderList } from "@/components/reminder/reminder-list";
 import { TodoList } from "@/components/todo/todo-list";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,13 @@ export default function Home() {
 					</Button>
 				</div>
 
-				<BookmarkList />
+				<div className="flex flex-col gap-4">
+					<BookmarkList />
+					<FundsList />
+				</div>
 			</div>
-			
-			<ShortcutsHelp />
+
+			{/* <ShortcutsHelp /> */}
 		</>
 	);
 }

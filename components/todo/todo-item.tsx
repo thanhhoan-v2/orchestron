@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Todo } from "@/lib/db";
@@ -10,11 +9,13 @@ import { cn } from "@/lib/utils";
 import {
 	ChevronDownIcon,
 	ChevronUpIcon,
+	CircleCheckIcon,
+	CircleIcon,
 	PenIcon,
 	RefreshCw,
 	Save,
 	X,
-	XIcon,
+	XIcon
 } from "lucide-react";
 import { useState } from "react";
 
@@ -110,24 +111,17 @@ export function TodoItem({
 		>
 			<CardContent>
 				<div className="flex items-center gap-3">
-					<div className="flex justify-between gap-2 w-full">
+					<div className="flex justify-between items-center gap-2 w-full">
 						<div className="flex flex-col gap-2">
-							<div className="flex flex-1 items-center gap-2 min-w-0">
-								<Checkbox
-									checked={todo.completed}
-									onCheckedChange={() => onToggle(todo.id)}
-									disabled={loading}
-								/>
+							<div className="flex flex-col gap-2">
 								<h3
 									className={cn(
-										"font-medium text-lg leading-tight",
+										"font-bold leading-tight",
 										todo.completed && "line-through text-muted-foreground"
 									)}
 								>
 									{todo.title}
 								</h3>
-							</div>
-							<div>
 								{todo.description && (
 									<p
 										className={cn(
@@ -165,6 +159,19 @@ export function TodoItem({
 							</div>
 
 							<div className="flex gap-2 border h-fit">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="p-0 w-8 h-8"
+									onClick={() => onToggle(todo.id)}
+								>
+									{todo.completed ? (
+										<CircleCheckIcon className="w-4 h-4 text-green-500" />
+									) : (
+										<CircleIcon className="w-4 h-4" />
+									)}
+								</Button>
+
 								<Button
 									variant="ghost"
 									size="sm"

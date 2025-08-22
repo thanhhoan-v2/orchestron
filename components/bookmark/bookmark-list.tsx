@@ -343,7 +343,7 @@ export function BookmarkList() {
 
 	return (
 		<>
-			<div className="py-5">
+			<div className="py-5 max-h-[450px] overflow-y-auto">
 				<BookmarkForm
 					onSubmit={handleCreateBookmark}
 					loading={createBookmarkMutation.isPending}
