@@ -6,7 +6,7 @@ import { OmniSearch } from "./omni-search";
 import { QuickCreateModals } from "./quick-create-modals";
 
 export function GlobalShortcuts() {
-  const [searchOpen, setSearchOpen] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [todoOpen, setTodoOpen] = useState(false);
   const [bookmarkOpen, setBookmarkOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);

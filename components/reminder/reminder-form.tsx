@@ -47,7 +47,6 @@ export function ReminderForm({ onSubmit, loading }: ReminderFormProps) {
         variant="ghost"
       >
         <Plus className="w-4 h-4" />
-        Add New Reminder
       </Button>
     );
   }

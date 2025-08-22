@@ -27,7 +27,7 @@ import {
 	useDeleteBookmark,
 	useMoveBookmark,
 	useParentOptions,
-	useUpdateBookmark
+	useUpdateBookmark,
 } from "@/lib/hooks/use-bookmarks";
 import {
 	Bookmark as BookmarkIcon,
@@ -42,9 +42,7 @@ import { useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
 
 export function BookmarkList() {
-	const [, setSelectedBookmark] = useState<
-		TreeDataItem | undefined
-	>();
+	const [, setSelectedBookmark] = useState<TreeDataItem | undefined>();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -65,12 +63,8 @@ export function BookmarkList() {
 	const [editColor, setEditColor] = useState("#3b82f6");
 
 	// React Query hooks
-	const {
-		data: bookmarks = [],
-		isLoading,
-	} = useBookmarks();
-	const { data: parentOptions = [] } =
-		useParentOptions();
+	const { data: bookmarks = [], isLoading } = useBookmarks();
+	const { data: parentOptions = [] } = useParentOptions();
 	const createBookmarkMutation = useCreateBookmark();
 	const updateBookmarkMutation = useUpdateBookmark();
 	const deleteBookmarkMutation = useDeleteBookmark();
@@ -343,7 +337,7 @@ export function BookmarkList() {
 
 	return (
 		<>
-			<div className="py-5 max-h-[450px] overflow-y-auto">
+			<div className="py-5 h-[40vh] overflow-y-auto">
 				<BookmarkForm
 					onSubmit={handleCreateBookmark}
 					loading={createBookmarkMutation.isPending}
@@ -482,7 +476,8 @@ export function BookmarkList() {
 					<DialogHeader>
 						<DialogTitle>Delete Bookmark</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete &quot;{deletingBookmark?.title}&quot;?
+							Are you sure you want to delete &quot;{deletingBookmark?.title}
+							&quot;?
 							{deletingBookmark?.children &&
 								deletingBookmark.children.length > 0 && (
 									<span className="block mt-2 text-destructive">

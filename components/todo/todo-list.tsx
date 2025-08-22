@@ -118,10 +118,7 @@ export function TodoList() {
 	}
 
 	return (
-		<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
-			{/* Stats */}
-
-			{/* Create Todo Form */}
+		<div className="space-y-6 mx-auto p-5 w-full h-[40vh]">
 			<TodoForm
 				onSubmit={handleCreateTodo}
 				loading={createTodoMutation.isPending}

@@ -98,6 +98,32 @@ export interface UpdateFundInput {
   order?: number;
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  description?: string;
+  target_date?: string;
+  priority: 'low' | 'medium' | 'high';
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateGoalInput {
+  title: string;
+  description?: string;
+  target_date?: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+export interface UpdateGoalInput {
+  title?: string;
+  description?: string;
+  target_date?: string;
+  priority?: 'low' | 'medium' | 'high';
+  order?: number;
+}
+
 export class TodoService {
   // Initialize the database table if it doesn't exist
   static async initializeDatabase(): Promise<void> {
@@ -913,6 +939,141 @@ export class FundService {
       }
     } catch (error) {
       console.error('Error reordering funds:', error);
+      throw error;
+    }
+  }
+}
+
+export class GoalService {
+  // Initialize the database table if it doesn't exist
+  static async initializeDatabase(): Promise<void> {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS goals (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          title TEXT NOT NULL,
+          description TEXT,
+          target_date DATE,
+          priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+          "order" INTEGER DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
+      // Add order column if it doesn't exist (for existing databases)
+      try {
+        await sql`
+          ALTER TABLE goals ADD COLUMN IF NOT EXISTS "order" INTEGER DEFAULT 0
+        `;
+        
+        // Set order for existing goals if they don't have it
+        await sql`
+          UPDATE goals 
+          SET "order" = EXTRACT(EPOCH FROM created_at)::INTEGER 
+          WHERE "order" = 0 OR "order" IS NULL
+        `;
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Order column migration info:', error);
+      }
+      console.log('Goals database table initialized successfully');
+    } catch (error) {
+      console.error('Error initializing goals database:', error);
+      throw error;
+    }
+  }
+
+  static async getAllGoals(): Promise<Goal[]> {
+    const result = await sql`
+      SELECT * FROM goals 
+      ORDER BY "order" ASC, created_at DESC
+    `;
+    return result as Goal[];
+  }
+
+  static async getGoalById(id: string): Promise<Goal | null> {
+    const result = await sql`
+      SELECT * FROM goals WHERE id = ${id}
+    `;
+    return result[0] as Goal || null;
+  }
+
+  static async createGoal(input: CreateGoalInput): Promise<Goal> {
+    // Get the maximum order value to place new goal at the end
+    const maxOrderResult = await sql`
+      SELECT COALESCE(MAX("order"), 0) + 1 as next_order FROM goals
+    `;
+    const nextOrder = maxOrderResult[0]?.next_order || 1;
+    
+    const result = await sql`
+      INSERT INTO goals (title, description, target_date, priority, "order")
+      VALUES (
+        ${input.title}, 
+        ${input.description || null}, 
+        ${input.target_date ? sql`${input.target_date}::DATE` : sql`NULL`}, 
+        ${input.priority || 'medium'}, 
+        ${nextOrder}
+      )
+      RETURNING *
+    `;
+    return result[0] as Goal;
+  }
+
+  static async updateGoal(id: string, input: UpdateGoalInput): Promise<Goal | null> {
+    // If no updates provided, return the existing goal
+    if (Object.keys(input).length === 0) {
+      return await this.getGoalById(id);
+    }
+
+    const currentGoal = await this.getGoalById(id);
+    if (!currentGoal) return null;
+
+    const result = await sql`
+      UPDATE goals 
+      SET 
+        title = ${input.title ?? currentGoal.title}, 
+        description = ${input.description ?? currentGoal.description}, 
+        target_date = ${input.target_date ? sql`${input.target_date}::DATE` : sql`${currentGoal.target_date}`}, 
+        priority = ${input.priority ?? currentGoal.priority}, 
+        "order" = ${input.order ?? currentGoal.order},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return result[0] as Goal || null;
+  }
+
+  static async deleteGoal(id: string): Promise<boolean> {
+    try {
+      const existingGoal = await this.getGoalById(id);
+      if (!existingGoal) {
+        return false;
+      }
+      
+      await sql`
+        DELETE FROM goals WHERE id = ${id}
+      `;
+      
+      const goalAfterDelete = await this.getGoalById(id);
+      return goalAfterDelete === null;
+    } catch (error) {
+      console.error('Error in deleteGoal:', error);
+      throw error;
+    }
+  }
+
+  static async reorderGoals(goalOrders: { id: string; order: number }[]): Promise<void> {
+    try {
+      for (const { id, order } of goalOrders) {
+        await sql`
+          UPDATE goals 
+          SET "order" = ${order}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+        `;
+      }
+    } catch (error) {
+      console.error('Error reordering goals:', error);
       throw error;
     }
   }
