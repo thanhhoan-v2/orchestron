@@ -6,10 +6,13 @@ export async function GET() {
     const savedMoney = await SavedMoneyService.getCurrentSavedMoney();
     
     if (!savedMoney) {
-      return NextResponse.json({ amount: "0" });
+      return NextResponse.json({ amount: "0", quick_add_amounts: [] });
     }
     
-    return NextResponse.json({ amount: savedMoney.amount });
+    return NextResponse.json({ 
+      amount: savedMoney.amount,
+      quick_add_amounts: savedMoney.quick_add_amounts || []
+    });
   } catch (error) {
     console.error("Error fetching saved money:", error);
     return NextResponse.json(
@@ -21,7 +24,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount } = await request.json();
+    const { amount, quick_add_amounts } = await request.json();
     
     if (!amount || typeof amount !== "string") {
       return NextResponse.json(
@@ -30,9 +33,17 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const updatedSavedMoney = await SavedMoneyService.updateSavedMoney({ amount });
+    const input: { amount: string; quick_add_amounts?: string[] } = { amount };
+    if (quick_add_amounts && Array.isArray(quick_add_amounts)) {
+      input.quick_add_amounts = quick_add_amounts;
+    }
     
-    return NextResponse.json({ amount: updatedSavedMoney.amount });
+    const updatedSavedMoney = await SavedMoneyService.updateSavedMoney(input);
+    
+    return NextResponse.json({ 
+      amount: updatedSavedMoney.amount,
+      quick_add_amounts: updatedSavedMoney.quick_add_amounts || []
+    });
   } catch (error) {
     console.error("Error updating saved money:", error);
     return NextResponse.json(

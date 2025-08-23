@@ -149,7 +149,7 @@ const SAVED_MONEY_QUERY_KEY = ["saved-money"];
 export function useSavedMoney() {
   return useQuery({
     queryKey: SAVED_MONEY_QUERY_KEY,
-    queryFn: async (): Promise<{ amount: string }> => {
+    queryFn: async (): Promise<{ amount: string; quick_add_amounts: string[] }> => {
       const response = await fetch("/api/saved-money");
       if (!response.ok) {
         throw new Error("Failed to fetch saved money");
@@ -163,13 +163,13 @@ export function useUpdateSavedMoney() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (amount: string): Promise<{ amount: string }> => {
+    mutationFn: async (input: { amount: string; quick_add_amounts?: string[] }): Promise<{ amount: string; quick_add_amounts: string[] }> => {
       const response = await fetch("/api/saved-money", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify(input),
       });
 
       if (!response.ok) {

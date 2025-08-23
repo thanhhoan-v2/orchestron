@@ -120,16 +120,19 @@ export interface UpdateGoalInput {
 export interface SavedMoney {
   id: string;
   amount: string; // in VND stored as string for precision
+  quick_add_amounts: string[]; // array of quick-add amounts as strings
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateSavedMoneyInput {
   amount: string;
+  quick_add_amounts?: string[];
 }
 
 export interface UpdateSavedMoneyInput {
   amount: string;
+  quick_add_amounts?: string[];
 }
 
 export class TodoStringService {
@@ -980,7 +983,10 @@ export class SavedMoneyService {
       // Update existing record
       const result = await sql`
         UPDATE saved_money 
-        SET amount = ${input.amount}, updated_at = CURRENT_TIMESTAMP
+        SET 
+          amount = ${input.amount}, 
+          quick_add_amounts = ${input.quick_add_amounts ? JSON.stringify(input.quick_add_amounts) : sql`quick_add_amounts`}::jsonb,
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ${existing.id}
         RETURNING *
       `;
@@ -988,8 +994,8 @@ export class SavedMoneyService {
     } else {
       // Create new record
       const result = await sql`
-        INSERT INTO saved_money (amount)
-        VALUES (${input.amount})
+        INSERT INTO saved_money (amount, quick_add_amounts)
+        VALUES (${input.amount}, ${input.quick_add_amounts ? JSON.stringify(input.quick_add_amounts) : '[]'}::jsonb)
         RETURNING *
       `;
       return result[0] as SavedMoney;
