@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 interface LoadingContextType {
 	isLoading: boolean;
@@ -22,7 +22,16 @@ interface LoadingProviderProps {
 }
 
 export function LoadingProvider({ children }: LoadingProviderProps) {
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
+
+	// Set loading to false after a brief delay to allow components to initialize
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setIsLoading(false);
+		}, 100);
+
+		return () => clearTimeout(timer);
+	}, []);
 
 	return (
 		<LoadingContext.Provider value={{ isLoading, setIsLoading }}>

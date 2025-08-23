@@ -41,7 +41,7 @@ import { useEffect, useRef, useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
 
 export function BookmarkList() {
-	const [selectedBookmark, setSelectedBookmark] = useState<TreeDataItem | undefined>();
+	const [, setSelectedBookmark] = useState<TreeDataItem | undefined>();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -374,7 +374,6 @@ export function BookmarkList() {
 						<TreeView
 							data={treeData}
 							onSelectChange={setSelectedBookmark}
-							selectedItemId={selectedBookmark?.id}
 							onDocumentDrag={handleReorderBookmarks}
 							defaultLeafIcon={Link}
 							defaultNodeIcon={Folder}

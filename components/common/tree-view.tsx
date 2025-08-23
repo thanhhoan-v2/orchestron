@@ -461,10 +461,8 @@ TreeLeaf.displayName = "TreeLeaf";
 
 const AccordionTrigger = React.forwardRef<
 	React.ElementRef<typeof AccordionPrimitive.Trigger>,
-	React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
-		showChevron?: boolean;
-	}
->(({ className, children, showChevron = true, ...props }, ref) => (
+	React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
 	<AccordionPrimitive.Header>
 		<AccordionPrimitive.Trigger
 			ref={ref}
@@ -474,9 +472,7 @@ const AccordionTrigger = React.forwardRef<
 			)}
 			{...props}
 		>
-			{showChevron && (
-				<ChevronRight className="mr-1 w-4 h-4 transition-transform duration-200 text-accent-foreground/50 shrink-0" />
-			)}
+			<ChevronRight className="mr-1 w-4 h-4 transition-transform duration-200 text-accent-foreground/50 shrink-0" />
 			{children}
 		</AccordionPrimitive.Trigger>
 	</AccordionPrimitive.Header>
