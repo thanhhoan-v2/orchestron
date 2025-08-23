@@ -77,7 +77,7 @@ export function useUpdateTodoString() {
 			// Optimistically update to the new value
 			if (previousTodoString) {
 				queryClient.setQueryData<TodoString>(TODOS_QUERY_KEY, (old) =>
-					old ? { ...old, content: input.content, updated_at: new Date().toISOString() } : null
+					old ? { ...old, content: input.content, updated_at: new Date().toISOString() } : undefined
 				);
 			}
 
