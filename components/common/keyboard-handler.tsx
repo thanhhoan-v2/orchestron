@@ -5,7 +5,6 @@ import { useEffect } from "react";
 interface KeyboardHandlerProps {
   onSearchOpen: () => void;
   onDailyDev: () => void;
-  onNewTodo: () => void;
   onNewBookmark: () => void;
   onNewReminder: () => void;
 }
@@ -13,7 +12,6 @@ interface KeyboardHandlerProps {
 export function KeyboardHandler({
   onSearchOpen,
   onDailyDev,
-  onNewTodo,
   onNewBookmark,
   onNewReminder,
 }: KeyboardHandlerProps) {
@@ -44,12 +42,6 @@ export function KeyboardHandler({
             onDailyDev();
           }
           break;
-        case "1":
-          if (!event.metaKey && !event.ctrlKey && !isInputFocused) {
-            event.preventDefault();
-            onNewTodo();
-          }
-          break;
         case "2":
           if (!event.metaKey && !event.ctrlKey && !isInputFocused) {
             event.preventDefault();
@@ -73,7 +65,7 @@ export function KeyboardHandler({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onSearchOpen, onDailyDev, onNewTodo, onNewBookmark, onNewReminder]);
+  }, [onSearchOpen, onDailyDev, onNewBookmark, onNewReminder]);
 
   return null; // This component doesn't render anything
 }

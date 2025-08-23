@@ -2,26 +2,19 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-export interface Todo {
+export interface TodoString {
   id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  order: number;
+  content: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface CreateTodoInput {
-  title: string;
-  description?: string;
+export interface CreateTodoStringInput {
+  content: string;
 }
 
-export interface UpdateTodoInput {
-  title?: string;
-  description?: string;
-  completed?: boolean;
-  order?: number;
+export interface UpdateTodoStringInput {
+  content: string;
 }
 
 export interface Bookmark {
@@ -124,227 +117,75 @@ export interface UpdateGoalInput {
   order?: number;
 }
 
-export class TodoService {
+export class TodoStringService {
   // Initialize the database table if it doesn't exist
   static async initializeDatabase(): Promise<void> {
     try {
       await sql`
-        CREATE TABLE IF NOT EXISTS todos (
+        CREATE TABLE IF NOT EXISTS todo_strings (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          title TEXT NOT NULL,
-          description TEXT,
-          completed BOOLEAN DEFAULT FALSE,
-          "order" INTEGER DEFAULT 0,
+          content TEXT NOT NULL DEFAULT '',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
       `;
       
-      // Add order column if it doesn't exist (for existing databases)
-      try {
+      // Insert default empty content if table is empty
+      const countResult = await sql`SELECT COUNT(*) as count FROM todo_strings`;
+      if (countResult[0]?.count === '0') {
         await sql`
-          ALTER TABLE todos ADD COLUMN IF NOT EXISTS "order" INTEGER DEFAULT 0
+          INSERT INTO todo_strings (content) VALUES ('')
         `;
-        
-        // Set order for existing todos if they don't have it
-        await sql`
-          UPDATE todos 
-          SET "order" = EXTRACT(EPOCH FROM created_at)::INTEGER 
-          WHERE "order" = 0 OR "order" IS NULL
-        `;
-      } catch (error) {
-        // Column might already exist, ignore error
-        console.log('Order column migration info:', error);
       }
-      console.log('Database table initialized successfully');
+      
+      console.log('Todo strings database table initialized successfully');
     } catch (error) {
       console.error('Error initializing database:', error);
       throw error;
     }
   }
 
-  static async getAllTodos(): Promise<Todo[]> {
+  static async getTodoString(): Promise<TodoString | null> {
     const result = await sql`
-      SELECT * FROM todos 
-      ORDER BY "order" ASC, created_at DESC
+      SELECT * FROM todo_strings 
+      ORDER BY created_at DESC 
+      LIMIT 1
     `;
-    return result as Todo[];
+    return result[0] as TodoString || null;
   }
 
-  static async getTodoById(id: string): Promise<Todo | null> {
-    const result = await sql`
-      SELECT * FROM todos WHERE id = ${id}
-    `;
-    return result[0] as Todo || null;
-  }
-
-  static async createTodo(input: CreateTodoInput): Promise<Todo> {
-    // Get the maximum order value to place new todo at the end
-    const maxOrderResult = await sql`
-      SELECT COALESCE(MAX("order"), 0) + 1 as next_order FROM todos
-    `;
-    const nextOrder = maxOrderResult[0]?.next_order || 1;
+  static async createOrUpdateTodoString(input: CreateTodoStringInput): Promise<TodoString> {
+    // Check if there's an existing record
+    const existing = await this.getTodoString();
     
-    const result = await sql`
-      INSERT INTO todos (title, description, "order")
-      VALUES (${input.title}, ${input.description || null}, ${nextOrder})
-      RETURNING *
-    `;
-    return result[0] as Todo;
+    if (existing) {
+      // Update existing record
+      const result = await sql`
+        UPDATE todo_strings 
+        SET content = ${input.content}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${existing.id}
+        RETURNING *
+      `;
+      return result[0] as TodoString;
+    } else {
+      // Create new record
+      const result = await sql`
+        INSERT INTO todo_strings (content)
+        VALUES (${input.content})
+        RETURNING *
+      `;
+      return result[0] as TodoString;
+    }
   }
 
-  static async updateTodo(id: string, input: UpdateTodoInput): Promise<Todo | null> {
-    // If no updates provided, return the existing todo
-    if (Object.keys(input).length === 0) {
-      return await this.getTodoById(id);
-    }
-
-    // Handle different update combinations using tagged template literals
-    if (input.title !== undefined && input.description !== undefined && input.completed !== undefined && input.order !== undefined) {
-      const result = await sql`
-        UPDATE todos 
-        SET title = ${input.title}, 
-            description = ${input.description}, 
-            completed = ${input.completed}, 
-            "order" = ${input.order},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.order !== undefined && input.completed === undefined && input.title === undefined && input.description === undefined) {
-      // Order only
-      const result = await sql`
-        UPDATE todos 
-        SET "order" = ${input.order}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.completed !== undefined && input.order === undefined && input.title === undefined && input.description === undefined) {
-      // Completed only
-      const result = await sql`
-        UPDATE todos 
-        SET completed = ${input.completed}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.title !== undefined && input.description !== undefined && input.completed === undefined && input.order === undefined) {
-      // Title and description
-      const result = await sql`
-        UPDATE todos 
-        SET title = ${input.title}, 
-            description = ${input.description}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.title !== undefined && input.completed !== undefined && input.description === undefined && input.order === undefined) {
-      // Title and completed
-      const result = await sql`
-        UPDATE todos 
-        SET title = ${input.title}, 
-            completed = ${input.completed}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.title !== undefined && input.description === undefined && input.completed === undefined && input.order === undefined) {
-      // Title only
-      const result = await sql`
-        UPDATE todos 
-        SET title = ${input.title}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    } else if (input.description !== undefined && input.title === undefined && input.completed === undefined && input.order === undefined) {
-      // Description only
-      const result = await sql`
-        UPDATE todos 
-        SET description = ${input.description}, 
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      return result[0] as Todo || null;
-    }
-
-    // Fallback for other combinations - get current todo and update all fields
-    const currentTodo = await this.getTodoById(id);
-    if (!currentTodo) return null;
-
+  static async updateTodoString(id: string, input: UpdateTodoStringInput): Promise<TodoString | null> {
     const result = await sql`
-      UPDATE todos 
-      SET title = ${input.title ?? currentTodo.title}, 
-          description = ${input.description ?? currentTodo.description}, 
-          completed = ${input.completed ?? currentTodo.completed}, 
-          "order" = ${input.order ?? currentTodo.order},
-          updated_at = CURRENT_TIMESTAMP
+      UPDATE todo_strings 
+      SET content = ${input.content}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *
     `;
-    return result[0] as Todo || null;
-  }
-
-  static async deleteTodo(id: string): Promise<boolean> {
-    console.log('TodoService.deleteTodo called with ID:', id, 'Type:', typeof id);
-    
-    try {
-      // First, let's check if the todo exists
-      const existingTodo = await this.getTodoById(id);
-      console.log('Existing todo before delete:', existingTodo);
-      
-      if (!existingTodo) {
-        console.log('Todo does not exist, returning false');
-        return false;
-      }
-      
-      await sql`
-        DELETE FROM todos WHERE id = ${id}
-      `;
-      
-      // Check if the todo still exists after deletion
-      const todoAfterDelete = await this.getTodoById(id);
-      const success = todoAfterDelete === null;
-      console.log('Delete operation success:', success);
-      return success;
-    } catch (error) {
-      console.error('Error in deleteTodo:', error);
-      throw error;
-    }
-  }
-
-  static async toggleTodoCompletion(id: string): Promise<Todo | null> {
-    const result = await sql`
-      UPDATE todos 
-      SET completed = NOT completed, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-      RETURNING *
-    `;
-    return result[0] as Todo || null;
-  }
-
-  static async reorderTodos(todoOrders: { id: string; order: number }[]): Promise<void> {
-    try {
-      // Update each todo's order in a single transaction-like operation
-      for (const { id, order } of todoOrders) {
-        await sql`
-          UPDATE todos 
-          SET "order" = ${order}, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ${id}
-        `;
-      }
-    } catch (error) {
-      console.error('Error reordering todos:', error);
-      throw error;
-    }
+    return result[0] as TodoString || null;
   }
 }
 

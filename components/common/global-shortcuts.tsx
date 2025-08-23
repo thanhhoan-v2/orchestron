@@ -7,7 +7,6 @@ import { QuickCreateModals } from "./quick-create-modals";
 
 export function GlobalShortcuts() {
 	const [searchOpen, setSearchOpen] = useState(true);
-	const [todoOpen, setTodoOpen] = useState(false);
 	const [bookmarkOpen, setBookmarkOpen] = useState(false);
 	const [reminderOpen, setReminderOpen] = useState(false);
 
@@ -17,10 +16,6 @@ export function GlobalShortcuts() {
 
 	const handleDailyDev = () => {
 		window.open("https://app.daily.dev", "_blank", "noopener,noreferrer");
-	};
-
-	const handleNewTodo = () => {
-		setTodoOpen(true);
 	};
 
 	const handleNewBookmark = () => {
@@ -36,7 +31,6 @@ export function GlobalShortcuts() {
 			<KeyboardHandler
 				onSearchOpen={handleSearchOpen}
 				onDailyDev={handleDailyDev}
-				onNewTodo={handleNewTodo}
 				onNewBookmark={handleNewBookmark}
 				onNewReminder={handleNewReminder}
 			/>
@@ -44,10 +38,8 @@ export function GlobalShortcuts() {
 			<OmniSearch open={searchOpen} onOpenChange={setSearchOpen} />
 
 			<QuickCreateModals
-				todoOpen={todoOpen}
 				bookmarkOpen={bookmarkOpen}
 				reminderOpen={reminderOpen}
-				onTodoOpenChange={setTodoOpen}
 				onBookmarkOpenChange={setBookmarkOpen}
 				onReminderOpenChange={setReminderOpen}
 			/>

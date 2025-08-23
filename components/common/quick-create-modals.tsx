@@ -6,43 +6,28 @@ import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 import { useCreateBookmark } from "@/lib/hooks/use-bookmarks";
 import { useCreateReminder } from "@/lib/hooks/use-reminders";
-import { useCreateTodo } from "@/lib/hooks/use-todos";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 
 interface QuickCreateModalsProps {
-  todoOpen: boolean;
   bookmarkOpen: boolean;
   reminderOpen: boolean;
-  onTodoOpenChange: (open: boolean) => void;
   onBookmarkOpenChange: (open: boolean) => void;
   onReminderOpenChange: (open: boolean) => void;
 }
 
 export function QuickCreateModals({
-  todoOpen,
   bookmarkOpen,
   reminderOpen,
-  onTodoOpenChange,
   onBookmarkOpenChange,
   onReminderOpenChange,
 }: QuickCreateModalsProps) {
-  const createTodo = useCreateTodo();
   const createBookmark = useCreateBookmark();
   const createReminder = useCreateReminder();
-
-  const handleCreateTodo = (todo: { title: string; description?: string }) => {
-    createTodo.mutate(todo, {
-      onSuccess: () => {
-        onTodoOpenChange(false);
-      },
-    });
-  };
 
   const handleCreateBookmark = (bookmark: {
     title: string;
@@ -72,22 +57,6 @@ export function QuickCreateModals({
 
   return (
     <>
-      {/* Quick Todo Creation Modal */}
-      <Dialog open={todoOpen} onOpenChange={onTodoOpenChange}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Quick Create Todo</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <QuickTodoForm
-              onSubmit={handleCreateTodo}
-              loading={createTodo.isPending}
-              onCancel={() => onTodoOpenChange(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Quick Bookmark Creation Modal */}
       <Dialog open={bookmarkOpen} onOpenChange={onBookmarkOpenChange}>
         <DialogContent className="max-w-2xl">
@@ -121,64 +90,6 @@ export function QuickCreateModals({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-// Quick form components for modal use
-interface QuickTodoFormProps {
-  onSubmit: (todo: { title: string; description?: string }) => void;
-  loading?: boolean;
-  onCancel: () => void;
-}
-
-function QuickTodoForm({ onSubmit, loading, onCancel }: QuickTodoFormProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
-    onSubmit({
-      title: title.trim(),
-      description: description.trim() || undefined,
-    });
-
-    setTitle("");
-    setDescription("");
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Input
-          placeholder="Todo title..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="text-lg"
-          required
-          autoFocus
-        />
-      </div>
-      
-      <div>
-        <Textarea
-          placeholder="Description (optional)..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="min-h-[100px]"
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <Button type="submit" disabled={!title.trim() || loading} className="flex-1">
-          {loading ? "Creating..." : "Create Todo"}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
-    </form>
   );
 }
 

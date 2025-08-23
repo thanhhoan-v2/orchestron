@@ -1,28 +1,5 @@
-import { TodoService, UpdateTodoInput } from '@/lib/db';
+import { TodoStringService, UpdateTodoStringInput } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const todo = await TodoService.getTodoById(id);
-    if (!todo) {
-      return NextResponse.json(
-        { error: 'Todo not found' },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(todo);
-  } catch (error) {
-    console.error('Error fetching todo:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch todo' },
-      { status: 500 }
-    );
-  }
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -31,60 +8,31 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const input: UpdateTodoInput = {
-      title: body.title,
-      description: body.description,
-      completed: body.completed,
+    const input: UpdateTodoStringInput = {
+      content: body.content,
     };
 
-    const todo = await TodoService.updateTodo(id, input);
-    if (!todo) {
+    if (input.content === undefined) {
       return NextResponse.json(
-        { error: 'Todo not found' },
-        { status: 404 }
+        { error: 'Content is required' },
+        { status: 400 }
       );
     }
-    return NextResponse.json(todo);
-  } catch (error) {
-    console.error('Error updating todo:', error);
-    return NextResponse.json(
-      { error: 'Failed to update todo' },
-      { status: 500 }
-    );
-  }
-}
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    console.log('DELETE request for todo ID:', id);
-    console.log('Database URL configured:', !!process.env.DATABASE_URL);
+    const todoString = await TodoStringService.updateTodoString(id, input);
     
-    // Ensure the database table exists
-    await TodoService.initializeDatabase();
-    console.log('Database initialization completed');
-    
-    const success = await TodoService.deleteTodo(id);
-    console.log('Delete operation result:', success);
-    
-    if (!success) {
-      console.log('Todo not found in database for ID:', id);
+    if (!todoString) {
       return NextResponse.json(
-        { error: 'Todo not found' },
+        { error: 'Todo string not found' },
         { status: 404 }
       );
     }
-    
-    console.log('Returning success response');
-    return NextResponse.json({ message: 'Todo deleted successfully' });
+
+    return NextResponse.json(todoString);
   } catch (error) {
-    console.error('Error deleting todo:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Error updating todo string:', error);
     return NextResponse.json(
-      { error: 'Failed to delete todo', details: error instanceof Error ? error.message : String(error) },
+      { error: 'Failed to update todo string' },
       { status: 500 }
     );
   }

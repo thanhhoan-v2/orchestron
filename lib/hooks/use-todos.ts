@@ -1,29 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreateTodoInput, Todo, UpdateTodoInput } from "../db";
+import { CreateTodoStringInput, TodoString, UpdateTodoStringInput } from "../db";
 
 // Query keys for consistent cache management
-export const TODOS_QUERY_KEY = ["todos"] as const;
+export const TODOS_QUERY_KEY = ["todoString"] as const;
 
-// Fetch all todos
-export function useTodos() {
+// Fetch the todo string
+export function useTodoString() {
 	return useQuery({
 		queryKey: TODOS_QUERY_KEY,
-		queryFn: async (): Promise<Todo[]> => {
+		queryFn: async (): Promise<TodoString | null> => {
 			const response = await fetch("/api/todos");
 			if (!response.ok) {
-				throw new Error("Failed to fetch todos");
+				throw new Error("Failed to fetch todo string");
 			}
 			return response.json();
 		},
 	});
 }
 
-// Create todo mutation
-export function useCreateTodo() {
+// Create or update todo string mutation
+export function useCreateOrUpdateTodoString() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (input: CreateTodoInput): Promise<Todo> => {
+		mutationFn: async (input: CreateTodoStringInput): Promise<TodoString> => {
 			const response = await fetch("/api/todos", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -31,158 +31,63 @@ export function useCreateTodo() {
 			});
 
 			if (!response.ok) {
-				throw new Error("Failed to create todo");
+				throw new Error("Failed to create or update todo string");
 			}
 
 			return response.json();
 		},
 		onSuccess: () => {
-			// Invalidate and refetch todos after successful creation
+			// Invalidate and refetch todo string after successful creation/update
 			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
 		},
 	});
 }
 
-// Update todo mutation
-export function useUpdateTodo() {
+// Update todo string mutation
+export function useUpdateTodoString() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: async ({
 			id,
-			updates,
+			input,
 		}: {
 			id: string;
-			updates: UpdateTodoInput;
-		}): Promise<Todo> => {
+			input: UpdateTodoStringInput;
+		}): Promise<TodoString> => {
 			const response = await fetch(`/api/todos/${id}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(updates),
+				body: JSON.stringify(input),
 			});
 
 			if (!response.ok) {
-				throw new Error("Failed to update todo");
+				throw new Error("Failed to update todo string");
 			}
 
 			return response.json();
 		},
-		onMutate: async ({ id, updates }) => {
+		onMutate: async ({ id, input }) => {
 			// Cancel any outgoing refetches
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
 
 			// Snapshot the previous value
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY);
+			const previousTodoString = queryClient.getQueryData<TodoString>(TODOS_QUERY_KEY);
 
 			// Optimistically update to the new value
-			if (previousTodos) {
-				queryClient.setQueryData<Todo[]>(TODOS_QUERY_KEY, (old) =>
-					old ? old.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo)) : []
+			if (previousTodoString) {
+				queryClient.setQueryData<TodoString>(TODOS_QUERY_KEY, (old) =>
+					old ? { ...old, content: input.content, updated_at: new Date().toISOString() } : null
 				);
 			}
 
 			// Return a context object with the snapshotted value
-			return { previousTodos };
+			return { previousTodoString };
 		},
 		onError: (err, variables, context) => {
 			// If the mutation fails, use the context returned from onMutate to roll back
-			if (context?.previousTodos) {
-				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
-			}
-		},
-		onSettled: () => {
-			// Always refetch after error or success
-			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
-		},
-	});
-}
-
-// Delete todo mutation
-export function useDeleteTodo() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: async (id: string): Promise<void> => {
-			const response = await fetch(`/api/todos/${id}`, {
-				method: "DELETE",
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to delete todo");
-			}
-		},
-		onMutate: async (id) => {
-			// Cancel any outgoing refetches
-			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-
-			// Snapshot the previous value
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY);
-
-			// Optimistically remove the todo
-			if (previousTodos) {
-				queryClient.setQueryData<Todo[]>(TODOS_QUERY_KEY, (old) =>
-					old ? old.filter((todo) => todo.id !== id) : []
-				);
-			}
-
-			// Return a context object with the snapshotted value
-			return { previousTodos };
-		},
-		onError: (err, id, context) => {
-			// If the mutation fails, use the context returned from onMutate to roll back
-			if (context?.previousTodos) {
-				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
-			}
-		},
-		onSettled: () => {
-			// Always refetch after error or success
-			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
-		},
-	});
-}
-
-// Reorder todos mutation
-export function useReorderTodos() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: async (todoOrders: { id: string; order: number }[]): Promise<void> => {
-			const response = await fetch("/api/todos/reorder", {
-				method: "PATCH",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ todoOrders }),
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to reorder todos");
-			}
-		},
-		onMutate: async (todoOrders) => {
-			// Cancel any outgoing refetches
-			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-
-			// Snapshot the previous value
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY);
-
-			// Optimistically update the order
-			if (previousTodos) {
-				queryClient.setQueryData<Todo[]>(TODOS_QUERY_KEY, (old) => {
-					if (!old) return [];
-					
-					return old.map((todo) => {
-						const orderUpdate = todoOrders.find((t) => t.id === todo.id);
-						return orderUpdate ? { ...todo, order: orderUpdate.order } : todo;
-					}).sort((a, b) => a.order - b.order);
-				});
-			}
-
-			// Return a context object with the snapshotted value
-			return { previousTodos };
-		},
-		onError: (err, todoOrders, context) => {
-			// If the mutation fails, use the context returned from onMutate to roll back
-			if (context?.previousTodos) {
-				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
+			if (context?.previousTodoString) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodoString);
 			}
 		},
 		onSettled: () => {

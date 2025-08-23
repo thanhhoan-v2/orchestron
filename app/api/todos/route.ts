@@ -1,16 +1,16 @@
-import { CreateTodoInput, TodoService } from '@/lib/db';
+import { CreateTodoStringInput, TodoStringService } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     // Ensure the database table exists
-    await TodoService.initializeDatabase();
-    const todos = await TodoService.getAllTodos();
-    return NextResponse.json(todos);
+    await TodoStringService.initializeDatabase();
+    const todoString = await TodoStringService.getTodoString();
+    return NextResponse.json(todoString);
   } catch (error) {
-    console.error('Error fetching todos:', error);
+    console.error('Error fetching todo string:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch todos' },
+      { error: 'Failed to fetch todo string' },
       { status: 500 }
     );
   }
@@ -19,27 +19,19 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Ensure the database table exists
-    await TodoService.initializeDatabase();
+    await TodoStringService.initializeDatabase();
     
     const body = await request.json();
-    const input: CreateTodoInput = {
-      title: body.title,
-      description: body.description,
+    const input: CreateTodoStringInput = {
+      content: body.content || '',
     };
 
-    if (!input.title?.trim()) {
-      return NextResponse.json(
-        { error: 'Title is required' },
-        { status: 400 }
-      );
-    }
-
-    const todo = await TodoService.createTodo(input);
-    return NextResponse.json(todo, { status: 201 });
+    const todoString = await TodoStringService.createOrUpdateTodoString(input);
+    return NextResponse.json(todoString, { status: 201 });
   } catch (error) {
-    console.error('Error creating todo:', error);
+    console.error('Error creating or updating todo string:', error);
     return NextResponse.json(
-      { error: 'Failed to create todo' },
+      { error: 'Failed to create or update todo string' },
       { status: 500 }
     );
   }

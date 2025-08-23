@@ -1,117 +1,61 @@
 "use client";
 
-import { Todo } from "@/lib/db";
+import { Button } from "@/components/ui/button";
 import {
-	useCreateTodo,
-	useDeleteTodo,
-	useReorderTodos,
-	useTodos,
-	useUpdateTodo,
+	useCreateOrUpdateTodoString,
+	useTodoString,
 } from "@/lib/hooks/use-todos";
-import { RefreshCw } from "lucide-react";
-import { useState } from "react";
-import { TodoForm } from "./todo-form";
-import { TodoItem } from "./todo-item";
-
-type FilterType = "all" | "pending" | "completed";
+import { PlusIcon, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Streamdown } from "streamdown";
+import {
+	Dialog,
+	DialogContent,
+	DialogTitle,
+	DialogTrigger,
+} from "../ui/dialog";
+import { Textarea } from "../ui/textarea";
 
 export function TodoList() {
-	const [filter] = useState<FilterType>("all");
-	const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+	const [value, setValue] = useState("");
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	// React Query hooks
-	const { data: todos = [], isLoading } = useTodos();
-	const createTodoMutation = useCreateTodo();
-	const updateTodoMutation = useUpdateTodo();
-	const deleteTodoMutation = useDeleteTodo();
-	const reorderTodosMutation = useReorderTodos();
+	const { data: todoString, isLoading } = useTodoString();
+	const createOrUpdateTodoStringMutation = useCreateOrUpdateTodoString();
 
-	const handleCreateTodo = async (todoData: {
-		title: string;
-		description?: string;
-	}) => {
-		createTodoMutation.mutate(todoData);
+	// Initialize local state with data from database
+	useEffect(() => {
+		if (todoString?.content) {
+			setValue(todoString.content);
+		}
+	}, [todoString?.content]);
+
+	const handleSaveTodoString = async () => {
+		if (value.trim() === "") return;
+
+		createOrUpdateTodoStringMutation.mutate({ content: value });
+		setIsDialogOpen(false);
 	};
 
-	const handleUpdateTodo = async (id: string, updates: Partial<Todo>) => {
-		updateTodoMutation.mutate({ id, updates });
+	const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setValue(e.target.value);
 	};
 
-	const handleDeleteTodo = async (id: string) => {
-		// Prevent multiple delete attempts
-		if (deletingIds.has(id)) return;
-
-		// Mark as deleting
-		setDeletingIds((prev) => new Set(prev).add(id));
-
-		deleteTodoMutation.mutate(id, {
-			onSettled: () => {
-				// Remove from deleting set regardless of success or failure
-				setDeletingIds((prev) => {
-					const newSet = new Set(prev);
-					newSet.delete(id);
-					return newSet;
-				});
-			},
-		});
-	};
-
-	const handleToggleTodo = async (id: string) => {
-		const todo = todos.find((t) => t.id === id);
-		if (todo) {
-			handleUpdateTodo(id, { completed: !todo.completed });
+	const handleDialogOpenChange = (open: boolean) => {
+		setIsDialogOpen(open);
+		// Reset to original content if dialog is closed without saving
+		if (!open && todoString?.content) {
+			setValue(todoString.content);
 		}
 	};
-
-	const handleMoveUp = async (todoId: string) => {
-		const currentIndex = filteredTodos.findIndex((todo) => todo.id === todoId);
-		if (currentIndex <= 0) return; // Already at top or not found
-
-		const currentTodo = filteredTodos[currentIndex];
-		const previousTodo = filteredTodos[currentIndex - 1];
-
-		// Swap the order values between the two todos
-		const todoOrders = [
-			{ id: currentTodo.id, order: previousTodo.order },
-			{ id: previousTodo.id, order: currentTodo.order },
-		];
-
-		reorderTodosMutation.mutate(todoOrders);
-	};
-
-	const handleMoveDown = async (todoId: string) => {
-		const currentIndex = filteredTodos.findIndex((todo) => todo.id === todoId);
-		if (currentIndex >= filteredTodos.length - 1 || currentIndex === -1) return; // Already at bottom or not found
-
-		const currentTodo = filteredTodos[currentIndex];
-		const nextTodo = filteredTodos[currentIndex + 1];
-
-		// Swap the order values between the two todos
-		const todoOrders = [
-			{ id: currentTodo.id, order: nextTodo.order },
-			{ id: nextTodo.id, order: currentTodo.order },
-		];
-
-		reorderTodosMutation.mutate(todoOrders);
-	};
-
-	const filteredTodos = todos.filter((todo) => {
-		switch (filter) {
-			case "pending":
-				return !todo.completed;
-			case "completed":
-				return todo.completed;
-			default:
-				return true;
-		}
-	});
 
 	if (isLoading) {
 		return (
 			<div className="flex justify-center items-center w-full min-h-[400px]">
 				<div className="flex flex-col justify-center items-center gap-3 p-8">
 					<RefreshCw className="size-6 animate-spin" />
-					<p>Loading todos</p>
+					<p>Loading todo string</p>
 				</div>
 			</div>
 		);
@@ -119,46 +63,53 @@ export function TodoList() {
 
 	return (
 		<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
-			<TodoForm
-				onSubmit={handleCreateTodo}
-				loading={createTodoMutation.isPending}
-			/>
-
-			{/* Todo List */}
-			<div className="space-y-4 max-h-[800px] overflow-y-auto">
-				{filteredTodos.length === 0 ? (
-					<div>
-						<div className="p-8 text-center">
-							<div className="space-y-2">
-								<h3 className="font-medium text-lg">No todos found</h3>
-								<p className="text-muted-foreground">
-									{filter === "all"
-										? "Create your first todo to get started!"
-										: `No ${filter} todos at the moment.`}
-								</p>
+			{/* Header with Edit Button */}
+			<div className="flex justify-between items-end pb-2 border-b-2">
+				<h2 className="font-bold text-xl">Todos</h2>
+				<Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+					<DialogTrigger asChild>
+						<Button variant="outline">
+							<PlusIcon className="size-4" />
+							Add Todos
+						</Button>
+					</DialogTrigger>
+					<DialogContent className="max-w-2xl">
+						<DialogTitle>Edit Todos</DialogTitle>
+						<div className="py-4">
+							<Textarea
+								placeholder="Add your todos here..."
+								value={value}
+								onChange={handleTextareaChange}
+								className="min-h-[200px] resize-none"
+							/>
+							<div className="flex gap-2 mt-4">
+								<Button
+									onClick={handleSaveTodoString}
+									disabled={
+										!value.trim() || createOrUpdateTodoStringMutation.isPending
+									}
+									className="flex-1"
+								>
+									{createOrUpdateTodoStringMutation.isPending
+										? "Saving..."
+										: "Save Todos"}
+								</Button>
+								<Button
+									variant="outline"
+									onClick={() => setIsDialogOpen(false)}
+								>
+									Cancel
+								</Button>
 							</div>
 						</div>
-					</div>
-				) : (
-					<div className="space-y-4">
-						{filteredTodos.map((todo, index) => (
-							<TodoItem
-								key={todo.id}
-								todo={todo}
-								onUpdate={handleUpdateTodo}
-								onDelete={handleDeleteTodo}
-								onToggle={handleToggleTodo}
-								onMoveUp={handleMoveUp}
-								onMoveDown={handleMoveDown}
-								loading={updateTodoMutation.isPending}
-								deleting={deletingIds.has(todo.id)}
-								canMoveUp={index > 0}
-								canMoveDown={index < filteredTodos.length - 1}
-							/>
-						))}
-					</div>
-				)}
+					</DialogContent>
+				</Dialog>
 			</div>
+
+			{/* Streamdown Display */}
+			<Streamdown className="p-4 border-none min-h-[400px]">
+				{value || "Start typing your todos above..."}
+			</Streamdown>
 		</div>
 	);
 }
