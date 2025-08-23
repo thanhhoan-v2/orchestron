@@ -47,9 +47,13 @@ export function GoalForm({ onSubmit, loading = false }: GoalFormProps) {
 				<DialogTitle>New Goal</DialogTitle>
 			</VisuallyHidden>
 			<DialogTrigger asChild>
-				<Button variant="ghost" className="mt-1 border-b-2 w-full">
-					<PlusIcon />
-				</Button>
+				<div className="flex justify-between items-end pb-2 border-b-2">
+					<h2 className="font-bold text-xl">Goals</h2>
+					<Button variant="outline">
+						<PlusIcon className="size-4" />
+						Add Goal
+					</Button>
+				</div>
 			</DialogTrigger>
 			<DialogContent>
 				<form onSubmit={handleSubmit} className="space-y-4">

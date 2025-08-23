@@ -338,19 +338,13 @@ export function BookmarkList() {
 	return (
 		<>
 			<div className="py-5 h-[50vh] overflow-y-auto">
-				<BookmarkForm
-					onSubmit={handleCreateBookmark}
-					loading={createBookmarkMutation.isPending}
-					preSelectedParentId={preSelectedParentId}
-					isDialogOpen={createDialogOpen}
-					onOpenChange={(open) => {
-						if (open) {
-							setCreateDialogOpen(true);
-						} else {
-							handleCreateDialogClose();
-						}
-					}}
-				/>
+				<div className="flex justify-between items-end pb-2 border-b-2">
+					<h2 className="font-bold text-xl">Bookmarks</h2>
+					<Button variant='outline' onClick={() => setCreateDialogOpen(true)}>
+						<Plus className="size-4" />
+						Add Bookmark
+					</Button>
+				</div>
 				<div>
 					{treeData.length === 0 ? (
 						<div className="py-8 text-muted-foreground text-center">
@@ -369,6 +363,31 @@ export function BookmarkList() {
 					)}
 				</div>
 			</div>
+
+			{/* Create Dialog */}
+			<Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Create New Bookmark</DialogTitle>
+						<DialogDescription>
+							Add a new bookmark or folder to your collection.
+						</DialogDescription>
+					</DialogHeader>
+					<BookmarkForm
+						onSubmit={handleCreateBookmark}
+						loading={createBookmarkMutation.isPending}
+						preSelectedParentId={preSelectedParentId}
+						isDialogOpen={createDialogOpen}
+						onOpenChange={(open) => {
+							if (open) {
+								setCreateDialogOpen(true);
+							} else {
+								handleCreateDialogClose();
+							}
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
 
 			{/* Edit Dialog */}
 			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

@@ -12,6 +12,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Bookmark as BookmarkType } from "@/lib/db";
 import { useBookmarks } from "@/lib/hooks/use-bookmarks";
+import useDebounce from "@/lib/hooks/use-debounce";
 import { generateSearchSuggestions } from "@/lib/search-suggestions";
 import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -28,23 +29,46 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const { data: bookmarks = [] } = useBookmarks();
 
-	// Filter bookmarks based on search query
+	// Debounce the search query to improve performance
+	const debouncedSearchQuery = useDebounce(searchQuery, 100);
+
+	// Filter bookmarks based on debounced search query
 	const filteredBookmarks = bookmarks.filter(
 		(bookmark: BookmarkType) =>
-			bookmark.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			bookmark.title
+				.toLowerCase()
+				.includes(debouncedSearchQuery.toLowerCase()) ||
 			(bookmark.description &&
 				bookmark.description
 					.toLowerCase()
-					.includes(searchQuery.toLowerCase())) ||
+					.includes(debouncedSearchQuery.toLowerCase())) ||
 			(bookmark.url &&
-				bookmark.url.toLowerCase().includes(searchQuery.toLowerCase()))
+				bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
 	);
 
-	// Generate smart suggestions
-	const suggestions = generateSearchSuggestions(searchQuery);
+	// Generate smart suggestions based on debounced query
+	const suggestions = generateSearchSuggestions(debouncedSearchQuery);
 
 	// Create search results array
 	const searchResults = [
+		// AI search option (when user types "ai:")
+		...(debouncedSearchQuery.startsWith("ai:") &&
+		debouncedSearchQuery.slice(3).trim()
+			? [
+					{
+						id: "ai-search",
+						type: "ai" as const,
+						title: `Ask Claude AI: "${debouncedSearchQuery.slice(3).trim()}"`,
+						url: `https://claude.ai/new?q=${encodeURIComponent(
+							debouncedSearchQuery.slice(3).trim()
+						)}`,
+						icon: Lightbulb,
+						description: "Press Enter to open Claude AI",
+						emoji: "🤖",
+						color: "#10b981",
+					},
+			  ]
+			: []),
 		// Smart suggestions (when available)
 		...suggestions.map((suggestion) => ({
 			id: suggestion.id,
@@ -57,14 +81,14 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 			color: undefined,
 		})),
 		// Google search option (always available when there's a query)
-		...(searchQuery.trim()
+		...(debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:")
 			? [
 					{
 						id: "google-search",
 						type: "google" as const,
-						title: `Search Google for "${searchQuery}"`,
+						title: `Search Google for "${debouncedSearchQuery}"`,
 						url: `https://www.google.com/search?q=${encodeURIComponent(
-							searchQuery
+							debouncedSearchQuery
 						)}`,
 						icon: Globe,
 						description: "Search on Google",
@@ -87,20 +111,37 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 	];
 
 	// Handle result selection
-	const handleSelect = useCallback((result: {
-		id: string;
-		type: string;
-		title: string;
-		url: string;
-		description: string;
-		emoji?: string;
-		color?: string;
-	}) => {
-		if (result.url && result.url !== "#") {
-			window.open(result.url, "_blank", "noopener,noreferrer");
+	const handleSelect = useCallback(
+		(result: {
+			id: string;
+			type: string;
+			title: string;
+			url: string;
+			description: string;
+			emoji?: string;
+			color?: string;
+		}) => {
+			if (result.url && result.url !== "#") {
+				window.open(result.url, "_blank", "noopener,noreferrer");
+			}
+			onOpenChange(false);
+		},
+		[onOpenChange]
+	);
+
+	// Handle special AI search
+	const handleAISearch = useCallback(() => {
+		if (debouncedSearchQuery.startsWith("ai:")) {
+			const aiQuery = debouncedSearchQuery.slice(3).trim(); // Remove "ai:" prefix
+			if (aiQuery) {
+				const claudeUrl = `https://claude.ai/new?q=${encodeURIComponent(
+					aiQuery
+				)}`;
+				window.open(claudeUrl, "_blank", "noopener,noreferrer");
+				onOpenChange(false);
+			}
 		}
-		onOpenChange(false);
-	}, [onOpenChange]);
+	}, [debouncedSearchQuery, onOpenChange]);
 
 	// Handle keyboard navigation
 	useEffect(() => {
@@ -128,12 +169,21 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					break;
 				case "Enter":
 					e.preventDefault();
-					if (searchResults[selectedIndex]) {
+					// Check for AI search first
+					if (debouncedSearchQuery.startsWith("ai:")) {
+						handleAISearch();
+					} else if (searchResults[selectedIndex]) {
 						handleSelect(searchResults[selectedIndex]);
 					}
 					break;
 				case "Escape":
 					onOpenChange(false);
+					break;
+				case "c":
+					if (e.ctrlKey) {
+						e.preventDefault();
+						onOpenChange(false);
+					}
 					break;
 			}
 		};
@@ -142,12 +192,20 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 			document.addEventListener("keydown", handleKeyDown);
 			return () => document.removeEventListener("keydown", handleKeyDown);
 		}
-	}, [open, searchResults, selectedIndex, onOpenChange, handleSelect]);
+	}, [
+		open,
+		searchResults,
+		selectedIndex,
+		onOpenChange,
+		handleSelect,
+		debouncedSearchQuery,
+		handleAISearch,
+	]);
 
 	// Reset selection when search changes
 	useEffect(() => {
 		setSelectedIndex(0);
-	}, [searchQuery]);
+	}, [debouncedSearchQuery]);
 
 	// Reset search when modal closes
 	useEffect(() => {
@@ -178,10 +236,10 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 						/>
 					</div>
 					<CommandList className="max-h-96 overflow-y-auto">
-						{searchResults.length === 0 && searchQuery && (
+						{searchResults.length === 0 && debouncedSearchQuery && (
 							<CommandEmpty>No results found.</CommandEmpty>
 						)}
-						{searchResults.length === 0 && !searchQuery && (
+						{searchResults.length === 0 && !debouncedSearchQuery && (
 							<CommandEmpty>
 								<div className="py-6 text-center">
 									<Search className="mx-auto mb-2 w-8 h-8 text-muted-foreground" />
@@ -205,12 +263,79 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 											</kbd>{" "}
 											to select
 										</p>
+										<p>
+											<kbd className="bg-muted px-1.5 py-0.5 rounded font-semibold text-xs">
+												Esc
+											</kbd>{" "}
+											or{" "}
+											<kbd className="bg-muted px-1.5 py-0.5 rounded font-semibold text-xs">
+												Ctrl+C
+											</kbd>{" "}
+											to close
+										</p>
 									</div>
 								</div>
 							</CommandEmpty>
 						)}
 						{searchResults.length > 0 && (
 							<>
+								{/* AI Search Group */}
+								{debouncedSearchQuery.startsWith("ai:") &&
+									debouncedSearchQuery.slice(3).trim() && (
+										<CommandGroup heading="AI Assistant">
+											{searchResults
+												.filter((result) => result.type === "ai")
+												.map((result, index) => {
+													const Icon = result.icon;
+													const isSelected = index === selectedIndex;
+
+													return (
+														<CommandItem
+															key={result.id}
+															onSelect={() => handleSelect(result)}
+															className={cn(
+																"flex items-center gap-3 p-3 cursor-pointer",
+																isSelected && "bg-accent text-accent-foreground"
+															)}
+														>
+															<div
+																className="flex justify-center items-center rounded-md w-8 h-8"
+																style={{
+																	backgroundColor: "#10b981",
+																	color: "white",
+																}}
+															>
+																{result.emoji ? (
+																	<span className="text-sm">
+																		{result.emoji}
+																	</span>
+																) : (
+																	<Icon className="w-4 h-4" />
+																)}
+															</div>
+															<div className="flex-1 min-w-0">
+																<div className="font-medium truncate">
+																	{result.title}
+																</div>
+																<div className="text-muted-foreground text-sm truncate">
+																	{result.description}
+																</div>
+															</div>
+															<div className="flex items-center gap-2">
+																<Badge
+																	variant="default"
+																	className="bg-emerald-100 border-emerald-200 text-emerald-800 text-xs"
+																>
+																	AI
+																</Badge>
+																<ExternalLink className="w-3 h-3 text-muted-foreground" />
+															</div>
+														</CommandItem>
+													);
+												})}
+										</CommandGroup>
+									)}
+
 								{/* Smart Suggestions Group */}
 								{suggestions.length > 0 && (
 									<CommandGroup heading="Smart Suggestions">
@@ -218,7 +343,12 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 											.filter((result) => result.type === "suggestion")
 											.map((result, index) => {
 												const Icon = result.icon;
-												const isSelected = index === selectedIndex;
+												const aiOffset =
+													debouncedSearchQuery.startsWith("ai:") &&
+													debouncedSearchQuery.slice(3).trim()
+														? 1
+														: 0;
+												const isSelected = index + aiOffset === selectedIndex;
 
 												return (
 													<CommandItem
@@ -266,17 +396,30 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 								)}
 
 								{/* Web Search and Bookmarks Group */}
-								{(searchQuery.trim() || filteredBookmarks.length > 0) && (
+								{(debouncedSearchQuery.trim() ||
+									filteredBookmarks.length > 0) && (
 									<CommandGroup
 										heading={
-											searchQuery ? "Web Search & Bookmarks" : "Bookmarks"
+											debouncedSearchQuery
+												? "Web Search & Bookmarks"
+												: "Bookmarks"
 										}
 									>
 										{searchResults
-											.filter((result) => result.type !== "suggestion")
+											.filter(
+												(result) =>
+													result.type !== "suggestion" && result.type !== "ai"
+											)
 											.map((result, index) => {
 												const Icon = result.icon;
-												const adjustedIndex = suggestions.length + index;
+												const aiOffset =
+													debouncedSearchQuery.startsWith("ai:") &&
+													debouncedSearchQuery.slice(3).trim()
+														? 1
+														: 0;
+												const suggestionOffset = suggestions.length;
+												const adjustedIndex =
+													aiOffset + suggestionOffset + index;
 												const isSelected = adjustedIndex === selectedIndex;
 
 												return (

@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
@@ -32,63 +38,68 @@ export function TodoForm({ onSubmit, loading }: TodoFormProps) {
 		setIsOpen(false);
 	};
 
-	if (!isOpen) {
-		return (
-			<Button
-				onClick={() => setIsOpen(true)}
-				className="justify-center gap-2 border-b-2 w-full"
-				size="lg"
-				variant="ghost"
-			>
-				<Plus className="w-4 h-4" />
-			</Button>
-		);
-	}
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		if (!open) {
+			// Reset form when dialog closes
+			setTitle("");
+			setDescription("");
+		}
+	};
 
 	return (
-		<Card className="w-full">
-			<CardHeader>
-				<CardTitle>Create New Todo</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<form onSubmit={handleSubmit} className="space-y-4">
-					<div>
-						<Input
-							placeholder="Todo title..."
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							className="text-lg"
-							required
-						/>
-					</div>
+		<div className="flex justify-between items-end pb-2 border-b-2">
+			<h2 className="font-bold text-xl">Todos</h2>
+			<Dialog open={isOpen} onOpenChange={handleOpenChange}>
+				<DialogTrigger asChild>
+					<Button variant="outline">
+						<Plus className="size-4" />
+						Add Todo
+					</Button>
+				</DialogTrigger>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>Create New Todo</DialogTitle>
+					</DialogHeader>
+					<form onSubmit={handleSubmit} className="space-y-4">
+						<div>
+							<Input
+								placeholder="Todo title..."
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								className="text-lg"
+								required
+							/>
+						</div>
 
-					<div>
-						<Textarea
-							placeholder="Description (optional)..."
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							className="min-h-[100px]"
-						/>
-					</div>
+						<div>
+							<Textarea
+								placeholder="Description (optional)..."
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								className="min-h-[100px]"
+							/>
+						</div>
 
-					<div className="flex gap-2">
-						<Button
-							type="submit"
-							disabled={!title.trim() || loading}
-							className="flex-1"
-						>
-							{loading ? "Creating..." : "Create Todo"}
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => setIsOpen(false)}
-						>
-							Cancel
-						</Button>
-					</div>
-				</form>
-			</CardContent>
-		</Card>
+						<div className="flex gap-2 pt-4">
+							<Button
+								type="submit"
+								disabled={!title.trim() || loading}
+								className="flex-1"
+							>
+								{loading ? "Creating..." : "Create Todo"}
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setIsOpen(false)}
+							>
+								Cancel
+							</Button>
+						</div>
+					</form>
+				</DialogContent>
+			</Dialog>
+		</div>
 	);
 }
