@@ -37,6 +37,7 @@ interface TreeDataItem {
 type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
 	data: TreeDataItem[] | TreeDataItem;
 	initialSelectedItemId?: string;
+	selectedItemId?: string;
 	onSelectChange?: (item: TreeDataItem | undefined) => void;
 	expandAll?: boolean;
 	defaultNodeIcon?: React.ComponentType<{ className?: string }>;
@@ -49,6 +50,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 		{
 			data,
 			initialSelectedItemId,
+			selectedItemId: externalSelectedItemId,
 			onSelectChange,
 			expandAll,
 			defaultLeafIcon,
@@ -59,9 +61,12 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 		},
 		ref
 	) => {
-		const [selectedItemId, setSelectedItemId] = React.useState<
+		const [internalSelectedItemId, setInternalSelectedItemId] = React.useState<
 			string | undefined
 		>(initialSelectedItemId);
+
+		// Use external selectedItemId if provided, otherwise use internal state
+		const selectedItemId = externalSelectedItemId !== undefined ? externalSelectedItemId : internalSelectedItemId;
 
 		const [draggedItem, setDraggedItem] = React.useState<TreeDataItem | null>(
 			null
@@ -69,7 +74,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 
 		const handleSelectChange = React.useCallback(
 			(item: TreeDataItem | undefined) => {
-				setSelectedItemId(item?.id);
+				setInternalSelectedItemId(item?.id);
 				if (onSelectChange) {
 					onSelectChange(item);
 				}
@@ -456,8 +461,10 @@ TreeLeaf.displayName = "TreeLeaf";
 
 const AccordionTrigger = React.forwardRef<
 	React.ElementRef<typeof AccordionPrimitive.Trigger>,
-	React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+	React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
+		showChevron?: boolean;
+	}
+>(({ className, children, showChevron = true, ...props }, ref) => (
 	<AccordionPrimitive.Header>
 		<AccordionPrimitive.Trigger
 			ref={ref}
@@ -467,7 +474,9 @@ const AccordionTrigger = React.forwardRef<
 			)}
 			{...props}
 		>
-			<ChevronRight className="mr-1 w-4 h-4 transition-transform duration-200 text-accent-foreground/50 shrink-0" />
+			{showChevron && (
+				<ChevronRight className="mr-1 w-4 h-4 transition-transform duration-200 text-accent-foreground/50 shrink-0" />
+			)}
 			{children}
 		</AccordionPrimitive.Trigger>
 	</AccordionPrimitive.Header>

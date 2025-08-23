@@ -143,9 +143,9 @@ export function GoalItem({
 	return (
 		<div className="group hover:shadow-md transition-shadow">
 			<div>
-				<div className="flex justify-between items-start">
+				<div className="flex justify-between items-center">
 					<div className="flex-1 min-w-0">
-						<div className="font-bold truncate">{goal.title}</div>
+						<div className="font-bold text-lg truncate">{goal.title}</div>
 						<div className="flex items-center gap-2">
 							{goal.target_date && (
 								<Badge variant="outline" className="flex items-center gap-1">

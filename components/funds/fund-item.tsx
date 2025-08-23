@@ -176,7 +176,7 @@ export function FundItem({
 								</div>
 								<div className="flex items-center gap-1 text-muted-foreground text-xs">
 									<DollarSign className="w-3 h-3" />
-									<span className="font-mono font-semibold text-green-600 dark:text-green-400 text-base">
+									<span className="opacity-0 hover:opacity-100 font-mono font-semibold text-green-600 dark:text-green-400 text-base transition-opacity">
 										{formatPrice(fund.price)}
 									</span>
 								</div>
@@ -194,12 +194,12 @@ export function FundItem({
 										></div>
 									</div>
 									<div className="flex justify-between items-center text-muted-foreground text-xs">
-										<span>
+										{/* <span>
 											{currentSavedMoney?.amount
 												? formatPrice(currentSavedMoney.amount)
 												: "₫0"}{" "}
 											saved
-										</span>
+										</span> */}
 										<span>
 											{progress >= 100
 												? "Goal reached! 🎉"

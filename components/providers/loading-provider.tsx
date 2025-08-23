@@ -22,7 +22,7 @@ interface LoadingProviderProps {
 }
 
 export function LoadingProvider({ children }: LoadingProviderProps) {
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 
 	return (
 		<LoadingContext.Provider value={{ isLoading, setIsLoading }}>

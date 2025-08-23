@@ -190,6 +190,9 @@ export function FundForm({ onSubmit, loading }: FundFormProps) {
 		<>
 			<div className="flex justify-between items-center pb-2 border-b-2">
 				<h2 className="font-bold text-xl">Funds</h2>
+				<div className="opacity-0 hover:opacity-100 transition-opacity">
+					{getCurrentSavedMoneyDisplay()}
+				</div>
 				<div className="flex gap-2">
 					<Dialog
 						open={savedMoneyDialogOpen}

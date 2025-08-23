@@ -35,15 +35,16 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 	// Filter bookmarks based on debounced search query
 	const filteredBookmarks = bookmarks.filter(
 		(bookmark: BookmarkType) =>
-			bookmark.title
+			// Only include bookmarks that have a URL (exclude folder-type bookmarks)
+			bookmark.url &&
+			(bookmark.title
 				.toLowerCase()
 				.includes(debouncedSearchQuery.toLowerCase()) ||
 			(bookmark.description &&
 				bookmark.description
 					.toLowerCase()
 					.includes(debouncedSearchQuery.toLowerCase())) ||
-			(bookmark.url &&
-				bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+			bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
 	);
 
 	// Generate smart suggestions based on debounced query
@@ -154,7 +155,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					if (e.ctrlKey || e.key === "ArrowDown") {
 						e.preventDefault();
 						setSelectedIndex((prev) =>
-							prev < searchResults.length - 1 ? prev + 1 : 0
+							prev < searchResults.length - 1 ? prev + 1 : prev
 						);
 					}
 					break;
@@ -163,7 +164,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					if (e.ctrlKey || e.key === "ArrowUp") {
 						e.preventDefault();
 						setSelectedIndex((prev) =>
-							prev > 0 ? prev - 1 : searchResults.length - 1
+							prev > 0 ? prev - 1 : prev
 						);
 					}
 					break;

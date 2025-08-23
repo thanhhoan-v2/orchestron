@@ -37,11 +37,11 @@ import {
 	Plus,
 	X
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
 
 export function BookmarkList() {
-	const [, setSelectedBookmark] = useState<TreeDataItem | undefined>();
+	const [selectedBookmark, setSelectedBookmark] = useState<TreeDataItem | undefined>();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -53,6 +53,9 @@ export function BookmarkList() {
 		string | undefined
 	>();
 
+	// Ref for the tree view container
+	const treeViewRef = useRef<HTMLDivElement>(null);
+
 	// Edit form state
 	const [editTitle, setEditTitle] = useState("");
 	const [editUrl, setEditUrl] = useState("");
@@ -60,6 +63,20 @@ export function BookmarkList() {
 	const [editParentId, setEditParentId] = useState<string | undefined>();
 	const [editIcon, setEditIcon] = useState("");
 	const [editColor, setEditColor] = useState("#3b82f6");
+
+	// Handle clicking outside to deselect
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (treeViewRef.current && !treeViewRef.current.contains(event.target as Node)) {
+				setSelectedBookmark(undefined);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
 
 	// React Query hooks
 	const { data: bookmarks = [], isLoading } = useBookmarks();
@@ -347,7 +364,7 @@ export function BookmarkList() {
 						<Plus className="size-4" />
 					</Button>
 				</div>
-				<div>
+				<div ref={treeViewRef}>
 					{treeData.length === 0 ? (
 						<div className="py-8 text-muted-foreground text-center">
 							<BookmarkIcon className="opacity-50 mx-auto mb-4 w-12 h-12" />
@@ -357,6 +374,7 @@ export function BookmarkList() {
 						<TreeView
 							data={treeData}
 							onSelectChange={setSelectedBookmark}
+							selectedItemId={selectedBookmark?.id}
 							onDocumentDrag={handleReorderBookmarks}
 							defaultLeafIcon={Link}
 							defaultNodeIcon={Folder}
