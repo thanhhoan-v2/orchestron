@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await TodoSessionService.getTodoSessionById(params.id);
+    const { id } = await params;
+    const session = await TodoSessionService.getTodoSessionById(id);
     
     if (!session) {
       return NextResponse.json(
@@ -27,16 +28,17 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const input: UpdateTodoSessionInput = {
       ...(body.title && { title: body.title }),
       ...(body.content && { content: body.content }),
     };
 
-    const session = await TodoSessionService.updateTodoSession(params.id, input);
+    const session = await TodoSessionService.updateTodoSession(id, input);
     
     if (!session) {
       return NextResponse.json(
@@ -57,10 +59,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await TodoSessionService.deleteTodoSession(params.id);
+    const { id } = await params;
+    const success = await TodoSessionService.deleteTodoSession(id);
     
     if (!success) {
       return NextResponse.json(
