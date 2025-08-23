@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useParentOptions } from "@/lib/hooks/use-bookmarks";
-import { Plus } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface BookmarkFormProps {
@@ -99,11 +99,10 @@ export function BookmarkForm({
 						setIsOpen(true);
 					}
 				}}
-				className="justify-center gap-2 border-b-2 w-full"
-				size="lg"
+				className="justify-center gap-2"
 				variant="ghost"
 			>
-				<Plus className="w-4 h-4" />
+				<PlusIcon className="size-4" />
 			</Button>
 		);
 	}

@@ -1,3 +1,5 @@
+"use client";
+
 import { BookmarkList } from "@/components/bookmark/bookmark-list";
 import { FundsList } from "@/components/funds/funds-list";
 import { GoalList } from "@/components/goal/goal-list";

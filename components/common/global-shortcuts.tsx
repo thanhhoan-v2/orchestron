@@ -1,17 +1,21 @@
 "use client";
 
+import { useLoading } from "@/components/providers/loading-provider";
 import { useState } from "react";
 import { KeyboardHandler } from "./keyboard-handler";
 import { OmniSearch } from "./omni-search";
 import { QuickCreateModals } from "./quick-create-modals";
 
 export function GlobalShortcuts() {
-	const [searchOpen, setSearchOpen] = useState(true);
+	const { isLoading } = useLoading();
+	const [searchOpen, setSearchOpen] = useState(false);
 	const [bookmarkOpen, setBookmarkOpen] = useState(false);
 	const [reminderOpen, setReminderOpen] = useState(false);
 
 	const handleSearchOpen = () => {
-		setSearchOpen(true);
+		if (!isLoading) {
+			setSearchOpen(true);
+		}
 	};
 
 	const handleDailyDev = () => {
@@ -19,11 +23,15 @@ export function GlobalShortcuts() {
 	};
 
 	const handleNewBookmark = () => {
-		setBookmarkOpen(true);
+		if (!isLoading) {
+			setBookmarkOpen(true);
+		}
 	};
 
 	const handleNewReminder = () => {
-		setReminderOpen(true);
+		if (!isLoading) {
+			setReminderOpen(true);
+		}
 	};
 
 	return (
@@ -35,14 +43,18 @@ export function GlobalShortcuts() {
 				onNewReminder={handleNewReminder}
 			/>
 
-			<OmniSearch open={searchOpen} onOpenChange={setSearchOpen} />
+			{!isLoading && (
+				<OmniSearch open={searchOpen} onOpenChange={setSearchOpen} />
+			)}
 
-			<QuickCreateModals
-				bookmarkOpen={bookmarkOpen}
-				reminderOpen={reminderOpen}
-				onBookmarkOpenChange={setBookmarkOpen}
-				onReminderOpenChange={setReminderOpen}
-			/>
+			{!isLoading && (
+				<QuickCreateModals
+					bookmarkOpen={bookmarkOpen}
+					reminderOpen={reminderOpen}
+					onBookmarkOpenChange={setBookmarkOpen}
+					onReminderOpenChange={setReminderOpen}
+				/>
+			)}
 		</>
 	);
 }

@@ -35,8 +35,7 @@ import {
 	Link,
 	Pen,
 	Plus,
-	RefreshCw,
-	X,
+	X
 } from "lucide-react";
 import { useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
@@ -326,12 +325,16 @@ export function BookmarkList() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center p-8 w-full">
-				<div className="flex flex-col justify-center items-center gap-3 p-8">
-					<RefreshCw className="mr-2 w-6 h-6 animate-spin" />
-					<div>Loading bookmarks</div>
+			<>
+				<div className="py-5 h-[50vh] overflow-y-auto">
+					<div className="flex justify-between items-end pb-2 border-b-2">
+						<h2 className="font-bold text-xl">Bookmarks</h2>
+						<Button variant="ghost" disabled>
+							<Plus className="size-4" />
+						</Button>
+					</div>
 				</div>
-			</div>
+			</>
 		);
 	}
 
@@ -340,9 +343,8 @@ export function BookmarkList() {
 			<div className="py-5 h-[50vh] overflow-y-auto">
 				<div className="flex justify-between items-end pb-2 border-b-2">
 					<h2 className="font-bold text-xl">Bookmarks</h2>
-					<Button variant='outline' onClick={() => setCreateDialogOpen(true)}>
+					<Button variant="ghost" onClick={() => setCreateDialogOpen(true)}>
 						<Plus className="size-4" />
-						Add Bookmark
 					</Button>
 				</div>
 				<div>

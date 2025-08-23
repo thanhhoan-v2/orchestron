@@ -49,9 +49,8 @@ export function GoalForm({ onSubmit, loading = false }: GoalFormProps) {
 			<DialogTrigger asChild>
 				<div className="flex justify-between items-end pb-2 border-b-2">
 					<h2 className="font-bold text-xl">Goals</h2>
-					<Button variant="outline">
+					<Button variant="ghost">
 						<PlusIcon className="size-4" />
-						Add Goal
 					</Button>
 				</div>
 			</DialogTrigger>

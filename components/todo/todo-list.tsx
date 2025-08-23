@@ -5,7 +5,7 @@ import {
 	useCreateOrUpdateTodoString,
 	useTodoString,
 } from "@/lib/hooks/use-todos";
-import { PlusIcon, RefreshCw } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Streamdown } from "streamdown";
 import {
@@ -52,10 +52,13 @@ export function TodoList() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center w-full min-h-[400px]">
-				<div className="flex flex-col justify-center items-center gap-3 p-8">
-					<RefreshCw className="size-6 animate-spin" />
-					<p>Loading todo string</p>
+			<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
+				{/* Header with Edit Button */}
+				<div className="flex justify-between items-end pb-2 border-b-2">
+					<h2 className="font-bold text-xl">Todos</h2>
+					<Button variant="ghost" disabled>
+						<PlusIcon className="size-4" />
+					</Button>
 				</div>
 			</div>
 		);
@@ -68,9 +71,8 @@ export function TodoList() {
 				<h2 className="font-bold text-xl">Todos</h2>
 				<Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
 					<DialogTrigger asChild>
-						<Button variant="outline">
+						<Button variant="ghost">
 							<PlusIcon className="size-4" />
-							Add Todos
 						</Button>
 					</DialogTrigger>
 					<DialogContent className="max-w-2xl">

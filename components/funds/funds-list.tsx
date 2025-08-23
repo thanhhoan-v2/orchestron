@@ -8,7 +8,6 @@ import {
     useReorderFunds,
     useUpdateFund,
 } from "@/lib/hooks/use-funds";
-import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { FundForm } from "./fund-form";
 import { FundItem } from "./fund-item";
@@ -87,11 +86,12 @@ export function FundsList() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center w-full min-h-[400px]">
-				<div className="flex flex-col justify-center items-center gap-3 p-8">
-					<RefreshCw className="size-6 animate-spin" />
-					<p>Loading fund goals</p>
-				</div>
+			<div className="space-y-6 mx-auto p-5 w-full">
+				{/* Create Fund Form */}
+				<FundForm
+					onSubmit={handleCreateFund}
+					loading={false}
+				/>
 			</div>
 		);
 	}

@@ -1,4 +1,5 @@
 import { GlobalShortcuts } from "@/components/common/global-shortcuts";
+import { LoadingProvider } from "@/components/providers/loading-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import type { Metadata } from "next";
@@ -38,8 +39,10 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						<GlobalShortcuts />
-						<main>{children}</main>
+						<LoadingProvider>
+							<GlobalShortcuts />
+							<main>{children}</main>
+						</LoadingProvider>
 					</ThemeProvider>
 				</QueryProvider>
 			</body>

@@ -2,13 +2,13 @@
 
 import { Goal } from "@/lib/db";
 import {
-	useCreateGoal,
-	useDeleteGoal,
-	useGoals,
-	useReorderGoals,
-	useUpdateGoal,
+    useCreateGoal,
+    useDeleteGoal,
+    useGoals,
+    useReorderGoals,
+    useUpdateGoal,
 } from "@/lib/hooks/use-goals";
-import { RefreshCw, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { useState } from "react";
 import { GoalForm } from "./goal-form";
 import { GoalItem } from "./goal-item";
@@ -105,11 +105,12 @@ export function GoalList() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center w-full min-h-[400px]">
-				<div className="flex flex-col justify-center items-center gap-3 p-8">
-					<RefreshCw className="size-6 animate-spin" />
-					<p>Loading goals</p>
-				</div>
+			<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
+				{/* Create Goal Form */}
+				<GoalForm
+					onSubmit={handleCreateGoal}
+					loading={false}
+				/>
 			</div>
 		);
 	}
