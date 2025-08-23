@@ -117,6 +117,21 @@ export interface UpdateGoalInput {
   order?: number;
 }
 
+export interface SavedMoney {
+  id: string;
+  amount: string; // in VND stored as string for precision
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSavedMoneyInput {
+  amount: string;
+}
+
+export interface UpdateSavedMoneyInput {
+  amount: string;
+}
+
 export class TodoStringService {
   // Initialize the database table if it doesn't exist
   static async initializeDatabase(): Promise<void> {
@@ -916,6 +931,68 @@ export class GoalService {
     } catch (error) {
       console.error('Error reordering goals:', error);
       throw error;
+    }
+  }
+}
+
+export class SavedMoneyService {
+  // Initialize the database table if it doesn't exist
+  static async initializeDatabase(): Promise<void> {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS saved_money (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          amount TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
+      // Insert default amount if table is empty
+      const countResult = await sql`SELECT COUNT(*) as count FROM saved_money`;
+      if (countResult[0]?.count === '0') {
+        await sql`
+          INSERT INTO saved_money (amount) VALUES ('0')
+        `;
+      }
+      
+      console.log('Saved money database table initialized successfully');
+    } catch (error) {
+      console.error('Error initializing saved money database:', error);
+      throw error;
+    }
+  }
+
+  static async getCurrentSavedMoney(): Promise<SavedMoney | null> {
+    const result = await sql`
+      SELECT * FROM saved_money 
+      ORDER BY updated_at DESC 
+      LIMIT 1
+    `;
+    return result[0] as SavedMoney || null;
+  }
+
+  static async updateSavedMoney(input: CreateSavedMoneyInput): Promise<SavedMoney> {
+    // Check if there's an existing record
+    const existing = await this.getCurrentSavedMoney();
+    
+    if (existing) {
+      // Update existing record
+      const result = await sql`
+        UPDATE saved_money 
+        SET amount = ${input.amount}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${existing.id}
+        RETURNING *
+      `;
+      return result[0] as SavedMoney;
+    } else {
+      // Create new record
+      const result = await sql`
+        INSERT INTO saved_money (amount)
+        VALUES (${input.amount})
+        RETURNING *
+      `;
+      return result[0] as SavedMoney;
     }
   }
 }

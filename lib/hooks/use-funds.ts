@@ -142,3 +142,45 @@ export function useReorderFunds() {
     },
   });
 }
+
+// Saved Money hooks
+const SAVED_MONEY_QUERY_KEY = ["saved-money"];
+
+export function useSavedMoney() {
+  return useQuery({
+    queryKey: SAVED_MONEY_QUERY_KEY,
+    queryFn: async (): Promise<{ amount: string }> => {
+      const response = await fetch("/api/saved-money");
+      if (!response.ok) {
+        throw new Error("Failed to fetch saved money");
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateSavedMoney() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (amount: string): Promise<{ amount: string }> => {
+      const response = await fetch("/api/saved-money", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update saved money");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SAVED_MONEY_QUERY_KEY });
+    },
+  });
+}
