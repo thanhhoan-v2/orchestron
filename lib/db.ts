@@ -17,6 +17,24 @@ export interface UpdateTodoStringInput {
   content: string;
 }
 
+export interface TodoSession {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTodoSessionInput {
+  title: string;
+  content: string;
+}
+
+export interface UpdateTodoSessionInput {
+  title?: string;
+  content?: string;
+}
+
 export interface Bookmark {
   id: string;
   title: string;
@@ -999,6 +1017,91 @@ export class SavedMoneyService {
         RETURNING *
       `;
       return result[0] as SavedMoney;
+    }
+  }
+}
+
+export class TodoSessionService {
+  // Initialize the database table if it doesn't exist
+  static async initializeDatabase(): Promise<void> {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS todo_sessions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          title TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
+      console.log('Todo sessions database table initialized successfully');
+    } catch (error) {
+      console.error('Error initializing todo sessions database:', error);
+      throw error;
+    }
+  }
+
+  static async getAllTodoSessions(): Promise<TodoSession[]> {
+    const result = await sql`
+      SELECT * FROM todo_sessions 
+      ORDER BY created_at DESC
+    `;
+    return result as TodoSession[];
+  }
+
+  static async getTodoSessionById(id: string): Promise<TodoSession | null> {
+    const result = await sql`
+      SELECT * FROM todo_sessions WHERE id = ${id}
+    `;
+    return result[0] as TodoSession || null;
+  }
+
+  static async createTodoSession(input: CreateTodoSessionInput): Promise<TodoSession> {
+    const result = await sql`
+      INSERT INTO todo_sessions (title, content)
+      VALUES (${input.title}, ${input.content})
+      RETURNING *
+    `;
+    return result[0] as TodoSession;
+  }
+
+  static async updateTodoSession(id: string, input: UpdateTodoSessionInput): Promise<TodoSession | null> {
+    if (Object.keys(input).length === 0) {
+      return await this.getTodoSessionById(id);
+    }
+
+    const currentSession = await this.getTodoSessionById(id);
+    if (!currentSession) return null;
+
+    const result = await sql`
+      UPDATE todo_sessions 
+      SET 
+        title = ${input.title ?? currentSession.title}, 
+        content = ${input.content ?? currentSession.content}, 
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return result[0] as TodoSession || null;
+  }
+
+  static async deleteTodoSession(id: string): Promise<boolean> {
+    try {
+      const existingSession = await this.getTodoSessionById(id);
+      if (!existingSession) {
+        return false;
+      }
+      
+      await sql`
+        DELETE FROM todo_sessions WHERE id = ${id}
+      `;
+      
+      const sessionAfterDelete = await this.getTodoSessionById(id);
+      return sessionAfterDelete === null;
+    } catch (error) {
+      console.error('Error in deleteTodoSession:', error);
+      throw error;
     }
   }
 }

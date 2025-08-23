@@ -11,12 +11,12 @@ export default function Home() {
 		<>
 			<div className="gap-4 grid grid-cols-3 px-5">
 				<div className="flex flex-col gap-4">
-					<TodoList />
+					<GoalList />
 					<ReminderList />
 				</div>
 
 				<div className="flex flex-col">
-					<GoalList />
+					<TodoList />
 					{/* <Image
 						src="/ascii-art-1.png"
 						alt="ascii-art-1"

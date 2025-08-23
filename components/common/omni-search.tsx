@@ -40,11 +40,11 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 			(bookmark.title
 				.toLowerCase()
 				.includes(debouncedSearchQuery.toLowerCase()) ||
-			(bookmark.description &&
-				bookmark.description
-					.toLowerCase()
-					.includes(debouncedSearchQuery.toLowerCase())) ||
-			bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+				(bookmark.description &&
+					bookmark.description
+						.toLowerCase()
+						.includes(debouncedSearchQuery.toLowerCase())) ||
+				bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
 	);
 
 	// Generate smart suggestions based on debounced query
@@ -163,9 +163,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 				case "p":
 					if (e.ctrlKey || e.key === "ArrowUp") {
 						e.preventDefault();
-						setSelectedIndex((prev) =>
-							prev > 0 ? prev - 1 : prev
-						);
+						setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
 					}
 					break;
 				case "Enter":
@@ -227,13 +225,13 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 			</VisuallyHidden>
 			<DialogContent className="p-0 max-w-2xl">
 				<Command className="shadow-md border rounded-lg" shouldFilter={false}>
-					<div className="flex items-center px-3 border-b">
+					<div className="flex items-center border-b">
 						{/* <Search className="opacity-50 mr-2 w-4 h-4 shrink-0" /> */}
 						<CommandInput
-							placeholder="Search bookmarks or the web..."
+							placeholder="Search anything"
 							value={searchQuery}
 							onValueChange={handleSearchChange}
-							className="flex bg-transparent py-3 border-0 outline-none w-full h-11 placeholder:text-muted-foreground text-sm"
+							className="flex items-center bg-transparent py-3 border-0 outline-none w-full h-11 placeholder:text-muted-foreground text-sm"
 						/>
 					</div>
 					<CommandList className="max-h-96 overflow-y-auto">
