@@ -200,7 +200,7 @@ export function FundItem({
 												: "₫0"}{" "}
 											saved
 										</span> */}
-										<span>
+										<span className="opacity-0 hover:opacity-100 transition-opacity">
 											{progress >= 100
 												? "Goal reached! 🎉"
 												: `${formatPrice(

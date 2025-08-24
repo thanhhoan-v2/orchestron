@@ -114,6 +114,8 @@ export interface Goal {
   title: string;
   description?: string;
   target_date?: string;
+  amount?: string;
+  progress?: string;
   priority: 'low' | 'medium' | 'high';
   order: number;
   created_at: string;
@@ -124,6 +126,8 @@ export interface CreateGoalInput {
   title: string;
   description?: string;
   target_date?: string;
+  amount?: string;
+  progress?: string;
   priority?: 'low' | 'medium' | 'high';
 }
 
@@ -131,6 +135,8 @@ export interface UpdateGoalInput {
   title?: string;
   description?: string;
   target_date?: string;
+  amount?: string;
+  progress?: string;
   priority?: 'low' | 'medium' | 'high';
   order?: number;
 }
@@ -831,6 +837,8 @@ export class GoalService {
           title TEXT NOT NULL,
           description TEXT,
           target_date DATE,
+          amount TEXT,
+          progress TEXT DEFAULT '0',
           priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
           "order" INTEGER DEFAULT 0,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -853,6 +861,26 @@ export class GoalService {
       } catch (error) {
         // Column might already exist, ignore error
         console.log('Order column migration info:', error);
+      }
+
+      // Add amount column if it doesn't exist (for existing databases)
+      try {
+        await sql`
+          ALTER TABLE goals ADD COLUMN IF NOT EXISTS amount TEXT
+        `;
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Amount column migration info:', error);
+      }
+
+      // Add progress column if it doesn't exist (for existing databases)
+      try {
+        await sql`
+          ALTER TABLE goals ADD COLUMN IF NOT EXISTS progress TEXT DEFAULT '0'
+        `;
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Progress column migration info:', error);
       }
       console.log('Goals database table initialized successfully');
     } catch (error) {
@@ -884,11 +912,13 @@ export class GoalService {
     const nextOrder = maxOrderResult[0]?.next_order || 1;
     
     const result = await sql`
-      INSERT INTO goals (title, description, target_date, priority, "order")
+      INSERT INTO goals (title, description, target_date, amount, progress, priority, "order")
       VALUES (
         ${input.title}, 
         ${input.description || null}, 
         ${input.target_date ? sql`${input.target_date}::DATE` : sql`NULL`}, 
+        ${input.amount || null}, 
+        ${input.progress || '0'}, 
         ${input.priority || 'medium'}, 
         ${nextOrder}
       )
@@ -912,6 +942,8 @@ export class GoalService {
         title = ${input.title ?? currentGoal.title}, 
         description = ${input.description ?? currentGoal.description}, 
         target_date = ${input.target_date ? sql`${input.target_date}::DATE` : sql`${currentGoal.target_date}`}, 
+        amount = ${input.amount ?? currentGoal.amount}, 
+        progress = ${input.progress ?? currentGoal.progress}, 
         priority = ${input.priority ?? currentGoal.priority}, 
         "order" = ${input.order ?? currentGoal.order},
         updated_at = CURRENT_TIMESTAMP

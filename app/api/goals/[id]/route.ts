@@ -35,6 +35,8 @@ export async function PATCH(
       title: body.title,
       description: body.description,
       target_date: body.target_date,
+      amount: body.amount,
+      progress: body.progress,
       priority: body.priority,
       order: body.order,
     };

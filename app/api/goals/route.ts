@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       title: body.title,
       description: body.description,
       target_date: body.target_date,
+      amount: body.amount,
+      progress: body.progress,
       priority: body.priority,
     };
 

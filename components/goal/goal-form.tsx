@@ -24,6 +24,8 @@ export function GoalForm({ onSubmit, loading = false }: GoalFormProps) {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [targetDate, setTargetDate] = useState("");
+	const [amount, setAmount] = useState("");
+	const [progress, setProgress] = useState("0");
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -33,12 +35,16 @@ export function GoalForm({ onSubmit, loading = false }: GoalFormProps) {
 			title: title.trim(),
 			description: description.trim() || undefined,
 			target_date: targetDate || undefined,
+			amount: amount || undefined,
+			progress: progress || "0",
 		});
 
 		// Reset form
 		setTitle("");
 		setDescription("");
 		setTargetDate("");
+		setAmount("");
+		setProgress("0");
 	};
 
 	return (
@@ -75,6 +81,32 @@ export function GoalForm({ onSubmit, loading = false }: GoalFormProps) {
 							onChange={(e) => setDescription(e.target.value)}
 							placeholder="More details about your goal..."
 							className="min-h-[80px]"
+						/>
+					</div>
+
+					<div>
+						<Label htmlFor="amount">Total Target (Optional)</Label>
+						<Input
+							id="amount"
+							type="number"
+							value={amount}
+							onChange={(e) => setAmount(e.target.value)}
+							placeholder="e.g., 150"
+							min="0"
+							step="1"
+						/>
+					</div>
+
+					<div>
+						<Label htmlFor="progress">Current Progress</Label>
+						<Input
+							id="progress"
+							type="number"
+							value={progress}
+							onChange={(e) => setProgress(e.target.value)}
+							placeholder="e.g., 42"
+							min="0"
+							step="1"
 						/>
 					</div>
 

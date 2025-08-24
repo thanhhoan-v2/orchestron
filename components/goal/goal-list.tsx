@@ -30,6 +30,8 @@ export function GoalList() {
 		title: string;
 		description?: string;
 		target_date?: string;
+		amount?: string;
+		progress?: string;
 		priority?: "low" | "medium" | "high";
 	}) => {
 		createGoalMutation.mutate(goalData);
