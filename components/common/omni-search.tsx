@@ -14,7 +14,6 @@ import { Bookmark as BookmarkType } from "@/lib/db";
 import { useBookmarks } from "@/lib/hooks/use-bookmarks";
 import useDebounce from "@/lib/hooks/use-debounce";
 import { generateSearchSuggestions } from "@/lib/search-suggestions";
-import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Bookmark, ExternalLink, Globe, Lightbulb, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -346,10 +345,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 														<CommandItem
 															key={result.id}
 															onSelect={() => handleSelect(result)}
-															className={cn(
-																"flex items-center gap-3 p-3 cursor-pointer",
-																isSelected && "bg-accent text-accent-foreground"
-															)}
+															className="flex items-center gap-3 p-3 cursor-pointer"
 														>
 															<div
 																className="flex justify-center items-center rounded-md w-8 h-8"
@@ -412,16 +408,12 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 														? 1
 														: 0;
 												const adjustedIndex = aiOffset + index;
-												const isSelected = adjustedIndex === selectedIndex;
 
 												return (
 													<CommandItem
 														key={result.id}
 														onSelect={() => handleSelect(result)}
-														className={cn(
-															"flex items-center gap-3 p-3 cursor-pointer",
-															isSelected && "bg-accent text-accent-foreground"
-														)}
+														className="flex items-center gap-3 p-3 cursor-pointer"
 													>
 														<div
 															className="flex justify-center items-center rounded-md w-8 h-8"
@@ -477,16 +469,12 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 														: 0;
 												const webSearchOffset = debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:") ? 1 : 0;
 												const adjustedIndex = aiOffset + webSearchOffset + index;
-												const isSelected = adjustedIndex === selectedIndex;
 
 												return (
 													<CommandItem
 														key={result.id}
 														onSelect={() => handleSelect(result)}
-														className={cn(
-															"flex items-center gap-3 p-3 cursor-pointer",
-															isSelected && "bg-accent text-accent-foreground"
-														)}
+														className="flex items-center gap-3 p-3 cursor-pointer"
 													>
 														<div
 															className="flex justify-center items-center rounded-md w-8 h-8"

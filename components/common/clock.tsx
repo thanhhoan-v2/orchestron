@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 
 export function Clock() {
-	const [currentTime, setCurrentTime] = useState(new Date());
+	const [currentTime, setCurrentTime] = useState<Date | null>(null);
+	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
+		setMounted(true);
+		setCurrentTime(new Date());
+		
 		const timer = setInterval(() => {
 			setCurrentTime(new Date());
 		}, 1000);
@@ -26,6 +30,19 @@ export function Clock() {
 
 		return `[${dayName}-${day}-${month}]-[${hours}:${minutes}:${seconds}]`;
 	};
+
+	// Don't render anything until mounted to prevent hydration mismatch
+	if (!mounted || !currentTime) {
+		return (
+			<div className="right-4 bottom-4 z-50 fixed">
+				<div className="bg-background/80 shadow-lg backdrop-blur-sm px-3 py-2 border rounded-lg">
+					<span className="font-mono text-foreground text-sm">
+						[--]--[--:--:--]
+					</span>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="right-4 bottom-4 z-50 fixed">
