@@ -3,39 +3,39 @@
 import { TreeDataItem, TreeView } from "@/components/common/tree-view";
 import { Button } from "@/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Bookmark } from "@/lib/db";
 import {
-	useBookmarks,
-	useCreateBookmark,
-	useDeleteBookmark,
-	useMoveBookmark,
-	useParentOptions,
-	useUpdateBookmark,
+    useBookmarks,
+    useCreateBookmark,
+    useDeleteBookmark,
+    useMoveBookmark,
+    useParentOptions,
+    useUpdateBookmark,
 } from "@/lib/hooks/use-bookmarks";
 import {
-	Bookmark as BookmarkIcon,
-	Folder,
-	Link,
-	Pen,
-	Plus,
-	X
+    Bookmark as BookmarkIcon,
+    Folder,
+    Link,
+    Pen,
+    Plus,
+    X
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
@@ -61,8 +61,6 @@ export function BookmarkList() {
 	const [editUrl, setEditUrl] = useState("");
 	const [editDescription, setEditDescription] = useState("");
 	const [editParentId, setEditParentId] = useState<string | undefined>();
-	const [editIcon, setEditIcon] = useState("");
-	const [editColor, setEditColor] = useState("#3b82f6");
 
 	// Handle clicking outside to deselect
 	useEffect(() => {
@@ -91,8 +89,6 @@ export function BookmarkList() {
 		url?: string;
 		description?: string;
 		parent_id?: string;
-		icon?: string;
-		color?: string;
 	}) => {
 		createBookmarkMutation.mutate(bookmarkData);
 	};
@@ -108,8 +104,6 @@ export function BookmarkList() {
 		setEditUrl(bookmark.url || "");
 		setEditDescription(bookmark.description || "");
 		setEditParentId(bookmark.parent_id);
-		setEditIcon(bookmark.icon || "");
-		setEditColor(bookmark.color || "#3b82f6");
 		setEditDialogOpen(true);
 	};
 
@@ -132,8 +126,6 @@ export function BookmarkList() {
 			url: editUrl.trim() || undefined,
 			description: editDescription.trim() || undefined,
 			parent_id: editParentId === "root" ? undefined : editParentId,
-			icon: editIcon.trim() || undefined,
-			color: editColor || undefined,
 		});
 
 		setEditDialogOpen(false);
@@ -450,48 +442,27 @@ export function BookmarkList() {
 							/>
 						</div>
 
-						<div className="gap-4 grid grid-cols-2">
-							<div>
-								<Label htmlFor="edit-parent">Parent Folder</Label>
-								<Select
-									value={editParentId || "root"}
-									onValueChange={(value) =>
-										setEditParentId(value === "root" ? undefined : value)
-									}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="Select parent (optional)" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="root">No parent (root level)</SelectItem>
-										{parentOptions.map((option) => (
-											<SelectItem key={option.id} value={option.id}>
-												{Array(option.level).fill("  ").join("")}
-												{option.title}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div>
-								<Label htmlFor="edit-color">Color</Label>
-								<div className="flex items-center gap-2">
-									<input
-										id="edit-color"
-										type="color"
-										value={editColor}
-										onChange={(e) => setEditColor(e.target.value)}
-										className="border rounded w-10 h-10 cursor-pointer"
-									/>
-									<Input
-										placeholder="Icon (optional)"
-										value={editIcon}
-										onChange={(e) => setEditIcon(e.target.value)}
-										className="flex-1"
-									/>
-								</div>
-							</div>
+						<div>
+							<Label htmlFor="edit-parent">Parent Folder</Label>
+							<Select
+								value={editParentId || "root"}
+								onValueChange={(value) =>
+									setEditParentId(value === "root" ? undefined : value)
+								}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Select parent (optional)" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="root">No parent (root level)</SelectItem>
+									{parentOptions.map((option) => (
+										<SelectItem key={option.id} value={option.id}>
+											{Array(option.level).fill("  ").join("")}
+											{option.title}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 					<DialogFooter>

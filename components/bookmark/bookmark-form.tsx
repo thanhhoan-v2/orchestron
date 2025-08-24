@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useParentOptions } from "@/lib/hooks/use-bookmarks";
@@ -40,8 +40,6 @@ export function BookmarkForm({
 	const [url, setUrl] = useState("");
 	const [description, setDescription] = useState("");
 	const [parentId, setParentId] = useState<string | undefined>();
-	const [icon, setIcon] = useState("");
-	const [color, setColor] = useState("#3b82f6");
 	const [isOpen, setIsOpen] = useState(false);
 
 	const { data: parentOptions = [], isLoading: parentOptionsLoading } =
@@ -69,8 +67,6 @@ export function BookmarkForm({
 			url: url.trim() || undefined,
 			description: description.trim() || undefined,
 			parent_id: parentId,
-			icon: icon.trim() || undefined,
-			color: color || undefined,
 		});
 
 		// Reset form
@@ -78,8 +74,6 @@ export function BookmarkForm({
 		setUrl("");
 		setDescription("");
 		setParentId(preSelectedParentId);
-		setIcon("");
-		setColor("#3b82f6");
 
 		// Close dialog
 		if (onOpenChange) {
@@ -137,49 +131,29 @@ export function BookmarkForm({
 				/>
 			</div>
 
-			<div className="gap-4 grid grid-cols-2">
-				<div>
-					<label className="block mb-2 font-medium text-sm">
-						Parent Folder
-					</label>
-					<Select
-						value={parentId || "root"}
-						onValueChange={(value) =>
-							setParentId(value === "root" ? undefined : value)
-						}
-					>
-						<SelectTrigger>
-							<SelectValue placeholder="Select parent (optional)" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="root">No parent (root level)</SelectItem>
-							{parentOptions.map((option) => (
-								<SelectItem key={option.id} value={option.id}>
-									{Array(option.level).fill("  ").join("")}
-									{option.title}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
-
-				<div>
-					<label className="block mb-2 font-medium text-sm">Color</label>
-					<div className="flex items-center gap-2">
-						<input
-							type="color"
-							value={color}
-							onChange={(e) => setColor(e.target.value)}
-							className="border rounded w-10 h-10 cursor-pointer"
-						/>
-						<Input
-							placeholder="Icon (optional)"
-							value={icon}
-							onChange={(e) => setIcon(e.target.value)}
-							className="flex-1"
-						/>
-					</div>
-				</div>
+			<div>
+				<label className="block mb-2 font-medium text-sm">
+					Parent Folder
+				</label>
+				<Select
+					value={parentId || "root"}
+					onValueChange={(value) =>
+						setParentId(value === "root" ? undefined : value)
+					}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Select parent (optional)" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="root">No parent (root level)</SelectItem>
+						{parentOptions.map((option) => (
+							<SelectItem key={option.id} value={option.id}>
+								{Array(option.level).fill("  ").join("")}
+								{option.title}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="flex gap-2">
