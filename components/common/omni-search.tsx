@@ -24,6 +24,38 @@ interface OmniSearchProps {
 	onOpenChange: (open: boolean) => void;
 }
 
+// Helper function to build full path for a bookmark
+function buildBookmarkPath(bookmark: BookmarkType, allBookmarks: BookmarkType[]): string {
+	if (!bookmark.parent_id) {
+		return bookmark.title;
+	}
+	
+	const parent = allBookmarks.find(b => b.id === bookmark.parent_id);
+	if (!parent) {
+		return bookmark.title;
+	}
+	
+	const parentPath = buildBookmarkPath(parent, allBookmarks);
+	return `${parentPath}/${bookmark.title}`;
+}
+
+// Helper function to flatten bookmark hierarchy for search
+function flattenBookmarks(bookmarks: BookmarkType[]): BookmarkType[] {
+	const flattened: BookmarkType[] = [];
+	
+	function flatten(bookmarkList: BookmarkType[]) {
+		for (const bookmark of bookmarkList) {
+			flattened.push(bookmark);
+			if (bookmark.children && bookmark.children.length > 0) {
+				flatten(bookmark.children);
+			}
+		}
+	}
+	
+	flatten(bookmarks);
+	return flattened;
+}
+
 export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedIndex, setSelectedIndex] = useState(0);
@@ -32,8 +64,11 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 	// Debounce the search query to improve performance
 	const debouncedSearchQuery = useDebounce(searchQuery, 100);
 
+	// Flatten bookmarks for easier searching
+	const flattenedBookmarks = flattenBookmarks(bookmarks);
+
 	// Filter bookmarks based on debounced search query
-	const filteredBookmarks = bookmarks.filter(
+	const filteredBookmarks = flattenedBookmarks.filter(
 		(bookmark: BookmarkType) =>
 			// Only include bookmarks that have a URL (exclude folder-type bookmarks)
 			bookmark.url &&
@@ -44,7 +79,11 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					bookmark.description
 						.toLowerCase()
 						.includes(debouncedSearchQuery.toLowerCase())) ||
-				bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+				bookmark.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+				// Also search in the full path
+				buildBookmarkPath(bookmark, flattenedBookmarks)
+					.toLowerCase()
+					.includes(debouncedSearchQuery.toLowerCase()))
 	);
 
 	// Generate smart suggestions based on debounced query
@@ -70,18 +109,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					},
 			  ]
 			: []),
-		// Smart suggestions (when available)
-		...suggestions.map((suggestion) => ({
-			id: suggestion.id,
-			type: "suggestion" as const,
-			title: suggestion.title,
-			url: suggestion.suggested,
-			icon: Lightbulb,
-			description: suggestion.description,
-			emoji: suggestion.icon,
-			color: undefined,
-		})),
-		// Google search option (always available when there's a query)
+		// Google search option (always available when there's a query, except for AI searches)
 		...(debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:")
 			? [
 					{
@@ -98,11 +126,31 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 					},
 			  ]
 			: []),
+		// Smart suggestions (only when they provide specific value beyond general web search)
+		...suggestions
+			.filter(suggestion => {
+				// Only show suggestions that are more specific than a general web search
+				// For example, show "github" suggestion but not generic domain suggestions
+				const isSpecificService = suggestion.type === "domain" || 
+					suggestion.type === "url" || 
+					suggestion.type === "port";
+				return isSpecificService;
+			})
+			.map((suggestion) => ({
+				id: suggestion.id,
+				type: "suggestion" as const,
+				title: suggestion.title,
+				url: suggestion.suggested,
+				icon: Lightbulb,
+				description: suggestion.description,
+				emoji: suggestion.icon,
+				color: undefined,
+			})),
 		// Bookmark results
 		...filteredBookmarks.slice(0, 6).map((bookmark: BookmarkType) => ({
 			id: bookmark.id,
 			type: "bookmark" as const,
-			title: bookmark.title,
+			title: buildBookmarkPath(bookmark, flattenedBookmarks),
 			url: bookmark.url || "#",
 			icon: Bookmark,
 			description: bookmark.description || bookmark.url || "Bookmark",
@@ -248,6 +296,12 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 									<div className="space-y-1 mt-4 text-muted-foreground text-xs">
 										<p>
 											<kbd className="bg-muted px-1.5 py-0.5 rounded font-semibold text-xs">
+												Ctrl+C
+											</kbd>{" "}
+											to open search
+										</p>
+										<p>
+											<kbd className="bg-muted px-1.5 py-0.5 rounded font-semibold text-xs">
 												Ctrl+N
 											</kbd>{" "}
 											or{" "}
@@ -335,66 +389,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 										</CommandGroup>
 									)}
 
-								{/* Smart Suggestions Group */}
-								{suggestions.length > 0 && (
-									<CommandGroup heading="Smart Suggestions">
-										{searchResults
-											.filter((result) => result.type === "suggestion")
-											.map((result, index) => {
-												const Icon = result.icon;
-												const aiOffset =
-													debouncedSearchQuery.startsWith("ai:") &&
-													debouncedSearchQuery.slice(3).trim()
-														? 1
-														: 0;
-												const isSelected = index + aiOffset === selectedIndex;
-
-												return (
-													<CommandItem
-														key={result.id}
-														onSelect={() => handleSelect(result)}
-														className={cn(
-															"flex items-center gap-3 p-3 cursor-pointer",
-															isSelected && "bg-accent text-accent-foreground"
-														)}
-													>
-														<div
-															className="flex justify-center items-center rounded-md w-8 h-8"
-															style={{
-																backgroundColor: "#f59e0b",
-																color: "white",
-															}}
-														>
-															{result.emoji ? (
-																<span className="text-sm">{result.emoji}</span>
-															) : (
-																<Icon className="w-4 h-4" />
-															)}
-														</div>
-														<div className="flex-1 min-w-0">
-															<div className="font-medium truncate">
-																{result.title}
-															</div>
-															<div className="text-muted-foreground text-sm truncate">
-																{result.description}
-															</div>
-														</div>
-														<div className="flex items-center gap-2">
-															<Badge
-																variant="default"
-																className="bg-amber-100 border-amber-200 text-amber-800 text-xs"
-															>
-																Suggestion
-															</Badge>
-															<ExternalLink className="w-3 h-3 text-muted-foreground" />
-														</div>
-													</CommandItem>
-												);
-											})}
-									</CommandGroup>
-								)}
-
-								{/* Web Search and Bookmarks Group */}
+								{/* Web Search and Bookmarks Group - Now First */}
 								{(debouncedSearchQuery.trim() ||
 									filteredBookmarks.length > 0) && (
 									<CommandGroup
@@ -416,9 +411,7 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 													debouncedSearchQuery.slice(3).trim()
 														? 1
 														: 0;
-												const suggestionOffset = suggestions.length;
-												const adjustedIndex =
-													aiOffset + suggestionOffset + index;
+												const adjustedIndex = aiOffset + index;
 												const isSelected = adjustedIndex === selectedIndex;
 
 												return (
@@ -462,6 +455,67 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 																	Bookmark
 																</Badge>
 															)}
+															<ExternalLink className="w-3 h-3 text-muted-foreground" />
+														</div>
+													</CommandItem>
+												);
+											})}
+									</CommandGroup>
+								)}
+
+								{/* Smart Suggestions Group - Now Second */}
+								{suggestions.length > 0 && (
+									<CommandGroup heading="Smart Suggestions">
+										{searchResults
+											.filter((result) => result.type === "suggestion")
+											.map((result, index) => {
+												const Icon = result.icon;
+												const aiOffset =
+													debouncedSearchQuery.startsWith("ai:") &&
+													debouncedSearchQuery.slice(3).trim()
+														? 1
+														: 0;
+												const webSearchOffset = debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:") ? 1 : 0;
+												const adjustedIndex = aiOffset + webSearchOffset + index;
+												const isSelected = adjustedIndex === selectedIndex;
+
+												return (
+													<CommandItem
+														key={result.id}
+														onSelect={() => handleSelect(result)}
+														className={cn(
+															"flex items-center gap-3 p-3 cursor-pointer",
+															isSelected && "bg-accent text-accent-foreground"
+														)}
+													>
+														<div
+															className="flex justify-center items-center rounded-md w-8 h-8"
+															style={{
+																backgroundColor: "#f59e0b",
+																color: "white",
+															}}
+														>
+															{result.emoji ? (
+																<span className="text-sm">{result.emoji}</span>
+															) : (
+																<Icon className="w-4 h-4" />
+															)}
+														</div>
+														<div className="flex-1 min-w-0">
+															<div className="font-medium truncate">
+																{result.title}
+															</div>
+															<div className="text-muted-foreground text-sm truncate">
+																{result.description}
+															</div>
+														</div>
+														<div className="flex items-center gap-2">
+															<Badge
+																variant="default"
+																className="bg-amber-100 border-amber-200 text-amber-800 text-xs"
+															>
+																Suggestion
+															</Badge>
 															<ExternalLink className="w-3 h-3 text-muted-foreground" />
 														</div>
 													</CommandItem>

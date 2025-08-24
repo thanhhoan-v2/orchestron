@@ -30,8 +30,8 @@ export function KeyboardHandler({
       }
 
       switch (event.key.toLowerCase()) {
-        case "s":
-          if (!event.metaKey && !event.ctrlKey && !isInputFocused) {
+        case "c":
+          if (event.ctrlKey && !event.metaKey && !isInputFocused) {
             event.preventDefault();
             onSearchOpen();
           }
