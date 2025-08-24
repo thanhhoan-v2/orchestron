@@ -1,5 +1,6 @@
 import { Clock } from "@/components/common/clock";
 import { GlobalShortcuts } from "@/components/common/global-shortcuts";
+import { SavingStatus } from "@/components/common/saving-status";
 import { LoadingProvider } from "@/components/providers/loading-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -43,6 +44,7 @@ export default function RootLayout({
 						<LoadingProvider>
 							<GlobalShortcuts />
 							<main>{children}</main>
+							<SavingStatus />
 							<Clock />
 						</LoadingProvider>
 					</ThemeProvider>

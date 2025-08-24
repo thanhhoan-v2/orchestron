@@ -8,8 +8,9 @@ import {
 	useLoadTodoSession,
 	useTodoSessions,
 	useTodoString,
+	useUpdateTodoSession,
 } from "@/lib/hooks/use-todos";
-import { BookmarkIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { BookmarkIcon, EditIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Streamdown } from "streamdown";
 import {
@@ -34,6 +35,12 @@ export function TodoList() {
 		updated_at: string;
 	} | null>(null);
 	const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+	const [isEditSessionDialogOpen, setIsEditSessionDialogOpen] = useState(false);
+	const [editingSession, setEditingSession] = useState<{
+		id: string;
+		title: string;
+		content: string;
+	} | null>(null);
 
 	// React Query hooks
 	const { data: todoString, isLoading } = useTodoString();
@@ -42,6 +49,7 @@ export function TodoList() {
 	const createSessionMutation = useCreateTodoSession();
 	const deleteSessionMutation = useDeleteTodoSession();
 	const loadSessionMutation = useLoadTodoSession();
+	const updateSessionMutation = useUpdateTodoSession();
 
 	// Initialize local state with data from database
 	useEffect(() => {
@@ -111,12 +119,49 @@ export function TodoList() {
 		deleteSessionMutation.mutate(sessionId);
 	};
 
+	const handleEditSession = (session: {
+		id: string;
+		title: string;
+		content: string;
+		created_at: string;
+		updated_at: string;
+	}) => {
+		setEditingSession({
+			id: session.id,
+			title: session.title,
+			content: session.content,
+		});
+		setIsEditSessionDialogOpen(true);
+	};
+
+	const handleUpdateSession = async () => {
+		if (
+			!editingSession ||
+			!editingSession.title.trim() ||
+			!editingSession.content.trim()
+		)
+			return;
+
+		updateSessionMutation.mutate({
+			id: editingSession.id,
+			input: {
+				title: editingSession.title,
+				content: editingSession.content,
+			},
+		}, {
+			onSuccess: () => {
+				setIsEditSessionDialogOpen(false);
+				setEditingSession(null);
+			}
+		});
+	};
+
 	if (isLoading) {
 		return (
 			<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
 				{/* Header with Edit Button */}
 				<div className="flex justify-between items-end pb-2 border-b-2">
-					<h2 className="font-bold text-xl">Todos</h2>
+					<h2 className="font-bold text-xl">Notes</h2>
 					<Button variant="ghost" disabled>
 						<PlusIcon className="size-4" />
 					</Button>
@@ -129,7 +174,7 @@ export function TodoList() {
 		<div className="space-y-6 mx-auto p-5 w-full h-[50vh]">
 			{/* Header with Edit Button */}
 			<div className="flex justify-between items-end pb-2 border-b-2">
-				<h2 className="font-bold text-xl">Todos</h2>
+				<h2 className="font-bold text-xl">Notes</h2>
 				<Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
 					<DialogTrigger asChild>
 						<Button variant="ghost">
@@ -137,10 +182,10 @@ export function TodoList() {
 						</Button>
 					</DialogTrigger>
 					<DialogContent className="max-w-2xl">
-						<DialogTitle>Edit Todos</DialogTitle>
+						<DialogTitle>Edit Notes</DialogTitle>
 						<div className="py-4">
 							<Textarea
-								placeholder="Add your todos here..."
+								placeholder="Add your notes here..."
 								value={value}
 								onChange={handleTextareaChange}
 								className="min-h-[200px] resize-none"
@@ -153,7 +198,7 @@ export function TodoList() {
 								>
 									{createOrUpdateTodoStringMutation.isPending
 										? "Saving..."
-										: "Save Todos"}
+										: "Save Notes"}
 								</Button>
 								<Dialog
 									open={isSaveSessionDialogOpen}
@@ -166,7 +211,7 @@ export function TodoList() {
 										</Button>
 									</DialogTrigger>
 									<DialogContent>
-										<DialogTitle>Save Todo Session</DialogTitle>
+										<DialogTitle>Save Note Session</DialogTitle>
 										<div className="py-4">
 											<Input
 												placeholder="Session name..."
@@ -224,7 +269,7 @@ export function TodoList() {
 
 			{/* Saved Sessions */}
 			<div>
-				<h3 className="mb-6 pb-2 border-b-2 font-bold text-xl">Saved Todos</h3>
+				<h3 className="mb-6 pb-2 border-b-2 font-bold text-xl">Saved Notes</h3>
 				{sessionsLoading ? (
 					<div className="text-gray-500">Loading sessions...</div>
 				) : sessions && sessions.length > 0 ? (
@@ -249,7 +294,13 @@ export function TodoList() {
 									>
 										Preview
 									</Button>
-
+									<Button
+										size="sm"
+										variant="outline"
+										onClick={() => handleEditSession(session)}
+									>
+										<EditIcon className="size-4" />
+									</Button>
 									<Button
 										size="sm"
 										variant="destructive"
@@ -264,7 +315,7 @@ export function TodoList() {
 					</div>
 				) : (
 					<div className="py-4 text-gray-500 text-center">
-						No saved todos yet.
+						No saved notes yet.
 					</div>
 				)}
 			</div>
@@ -311,6 +362,56 @@ export function TodoList() {
 								onClick={() => setIsPreviewDialogOpen(false)}
 							>
 								Close
+							</Button>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Edit Session Dialog */}
+			<Dialog
+				open={isEditSessionDialogOpen}
+				onOpenChange={setIsEditSessionDialogOpen}
+			>
+				<DialogContent>
+					<DialogTitle>Edit Saved Note</DialogTitle>
+					<div className="py-4">
+						<Input
+							placeholder="Note title..."
+							value={editingSession?.title || ""}
+							onChange={(e) =>
+								setEditingSession((prev) =>
+									prev ? { ...prev, title: e.target.value } : null
+								)
+							}
+							className="mb-4"
+						/>
+						<Textarea
+							placeholder="Note content..."
+							value={editingSession?.content || ""}
+							onChange={(e) =>
+								setEditingSession((prev) =>
+									prev ? { ...prev, content: e.target.value } : null
+								)
+							}
+							className="min-h-[400px] resize-none"
+						/>
+						<div className="flex gap-2 mt-4">
+							<Button
+								onClick={handleUpdateSession}
+								disabled={
+									!editingSession?.title?.trim() ||
+									!editingSession?.content?.trim()
+								}
+								className="flex-1"
+							>
+								Update Note
+							</Button>
+							<Button
+								variant="outline"
+								onClick={() => setIsEditSessionDialogOpen(false)}
+							>
+								Cancel
 							</Button>
 						</div>
 					</div>

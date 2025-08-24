@@ -34,8 +34,8 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const input: UpdateTodoSessionInput = {
-      ...(body.title && { title: body.title }),
-      ...(body.content && { content: body.content }),
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.content !== undefined && { content: body.content }),
     };
 
     const session = await TodoSessionService.updateTodoSession(id, input);
