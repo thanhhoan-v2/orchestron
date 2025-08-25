@@ -3,39 +3,41 @@
 import { TreeDataItem, TreeView } from "@/components/common/tree-view";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Bookmark } from "@/lib/db";
 import {
-    useBookmarks,
-    useCreateBookmark,
-    useDeleteBookmark,
-    useMoveBookmark,
-    useParentOptions,
-    useUpdateBookmark,
+	useBookmarks,
+	useCreateBookmark,
+	useDeleteBookmark,
+	useMoveBookmark,
+	useParentOptions,
+	useUpdateBookmark,
 } from "@/lib/hooks/use-bookmarks";
 import {
-    Bookmark as BookmarkIcon,
-    Folder,
-    Link,
-    Pen,
-    Plus,
-    X
+	Bookmark as BookmarkIcon,
+	EditIcon,
+	Folder,
+	FolderIcon,
+	Link,
+	LinkIcon,
+	Plus,
+	XIcon
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BookmarkForm } from "./bookmark-form";
@@ -65,14 +67,17 @@ export function BookmarkList() {
 	// Handle clicking outside to deselect
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (treeViewRef.current && !treeViewRef.current.contains(event.target as Node)) {
+			if (
+				treeViewRef.current &&
+				!treeViewRef.current.contains(event.target as Node)
+			) {
 				setSelectedBookmark(undefined);
 			}
 		};
 
-		document.addEventListener('mousedown', handleClickOutside);
+		document.addEventListener("mousedown", handleClickOutside);
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
+			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, []);
 
@@ -268,7 +273,7 @@ export function BookmarkList() {
 			return {
 				id: bookmark.id,
 				name: bookmark.title,
-				icon: isUrl ? Link : Folder,
+				icon: isUrl ? LinkIcon : FolderIcon,
 				// Only set children if it's not a URL AND has actual children
 				children:
 					!isUrl && hasChildren
@@ -310,7 +315,7 @@ export function BookmarkList() {
 							}}
 							title="Edit"
 						>
-							<Pen className="w-3 h-3" />
+							<EditIcon className="size-4" />
 						</div>
 						<div
 							className="inline-flex justify-center items-center hover:bg-destructive p-1 rounded-sm w-6 h-6 hover:text-destructive-foreground transition-colors cursor-pointer"
@@ -322,7 +327,7 @@ export function BookmarkList() {
 							}}
 							title="Delete"
 						>
-							<X className="w-3 h-3" />
+							<XIcon className="size-4" />
 						</div>
 					</div>
 				),

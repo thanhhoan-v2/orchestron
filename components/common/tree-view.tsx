@@ -6,6 +6,11 @@ import { cva } from "class-variance-authority";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuTrigger,
+} from "../ui/context-menu";
 
 const treeVariants = cva(
 	"group before:left-0 before:-z-10 before:absolute before:bg-accent/70 before:opacity-0 hover:before:opacity-100 px-2 before:rounded-lg before:w-full before:h-[2rem]"
@@ -66,7 +71,10 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 		>(initialSelectedItemId);
 
 		// Use external selectedItemId if provided, otherwise use internal state
-		const selectedItemId = externalSelectedItemId !== undefined ? externalSelectedItemId : internalSelectedItemId;
+		const selectedItemId =
+			externalSelectedItemId !== undefined
+				? externalSelectedItemId
+				: internalSelectedItemId;
 
 		const [draggedItem, setDraggedItem] = React.useState<TreeDataItem | null>(
 			null
@@ -400,7 +408,7 @@ const TreeLeaf = React.forwardRef<
 		);
 
 		const commonClassName = cn(
-			"ml-5 flex text-left items-center py-2 cursor-pointer before:right-1",
+			"ml-5 flex text-left items-center py-2 cursor-pointer before:right-1 underline underline-offset-4",
 			treeVariants(),
 			className,
 			selectedItemId === item.id && selectedTreeVariants(),
@@ -428,15 +436,20 @@ const TreeLeaf = React.forwardRef<
 			};
 
 			return (
-				<Link
-					href={item.href}
-					className={commonClassName}
-					draggable={!!item.draggable}
-					target="_blank"
-					{...linkHandlers}
-				>
-					{leafContent}
-				</Link>
+				<ContextMenu>
+					<ContextMenuTrigger asChild>
+						<Link
+							href={item.href}
+							className={commonClassName}
+							draggable={!!item.draggable}
+							target="_blank"
+							{...linkHandlers}
+						>
+							{leafContent}
+						</Link>
+					</ContextMenuTrigger>
+					<ContextMenuContent>{item.actions}</ContextMenuContent>
+				</ContextMenu>
 			);
 		}
 
