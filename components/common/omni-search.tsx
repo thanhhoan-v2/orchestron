@@ -2,12 +2,12 @@
 
 import { Badge } from "@/components/ui/badge";
 import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
 } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Bookmark as BookmarkType } from "@/lib/db";
@@ -90,6 +90,17 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 
 	// Create search results array
 	const searchResults = [
+		// Bookmark results - NOW FIRST
+		...filteredBookmarks.slice(0, 6).map((bookmark: BookmarkType) => ({
+			id: bookmark.id,
+			type: "bookmark" as const,
+			title: buildBookmarkPath(bookmark, flattenedBookmarks),
+			url: bookmark.url || "#",
+			icon: Bookmark,
+			description: bookmark.description || bookmark.url || "Bookmark",
+			color: bookmark.color,
+			emoji: undefined,
+		})),
 		// AI search option (when user types "ai:")
 		...(debouncedSearchQuery.startsWith("ai:") &&
 		debouncedSearchQuery.slice(3).trim()
@@ -145,17 +156,6 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 				emoji: suggestion.icon,
 				color: undefined,
 			})),
-		// Bookmark results
-		...filteredBookmarks.slice(0, 6).map((bookmark: BookmarkType) => ({
-			id: bookmark.id,
-			type: "bookmark" as const,
-			title: buildBookmarkPath(bookmark, flattenedBookmarks),
-			url: bookmark.url || "#",
-			icon: Bookmark,
-			description: bookmark.description || bookmark.url || "Bookmark",
-			color: bookmark.color,
-			emoji: undefined,
-		})),
 	];
 
 	// Handle result selection
@@ -331,6 +331,96 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 						)}
 						{searchResults.length > 0 && (
 							<>
+								{/* Bookmarks Group - NOW FIRST */}
+								{filteredBookmarks.length > 0 && (
+									<CommandGroup heading="Bookmarks">
+										{searchResults
+											.filter((result) => result.type === "bookmark")
+											.map((result, index) => {
+												const Icon = result.icon;
+												const isSelected = index === selectedIndex;
+
+												return (
+													<CommandItem
+														key={result.id}
+														onSelect={() => handleSelect(result)}
+														className="flex items-center gap-3 p-3 cursor-pointer"
+													>
+														<div
+															className="flex justify-center items-center rounded-md w-8 h-8"
+															style={{
+																backgroundColor:
+																	result.color || "#6b7280",
+																color: "white",
+															}}
+														>
+															<Icon className="w-4 h-4" />
+														</div>
+														<div className="flex-1 min-w-0">
+															<div className="font-medium truncate">
+																{result.title}
+															</div>
+															<div className="text-muted-foreground text-sm truncate">
+																{result.description}
+															</div>
+														</div>
+														<div className="flex items-center gap-2">
+															<Badge variant="outline" className="text-xs">
+																Bookmark
+															</Badge>
+															<ExternalLink className="w-3 h-3 text-muted-foreground" />
+														</div>
+													</CommandItem>
+												);
+											})}
+									</CommandGroup>
+								)}
+
+								{/* Web Search Group */}
+								{debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:") && (
+									<CommandGroup heading="Web Search">
+										{searchResults
+											.filter((result) => result.type === "google")
+											.map((result, index) => {
+												const Icon = result.icon;
+												const bookmarkOffset = filteredBookmarks.length > 0 ? filteredBookmarks.slice(0, 6).length : 0;
+												const adjustedIndex = bookmarkOffset + index;
+
+												return (
+													<CommandItem
+														key={result.id}
+														onSelect={() => handleSelect(result)}
+														className="flex items-center gap-3 p-3 cursor-pointer"
+													>
+														<div
+															className="flex justify-center items-center rounded-md w-8 h-8"
+															style={{
+																backgroundColor: "#4285f4",
+																color: "white",
+															}}
+														>
+															<Icon className="w-4 h-4" />
+														</div>
+														<div className="flex-1 min-w-0">
+															<div className="font-medium truncate">
+																{result.title}
+															</div>
+															<div className="text-muted-foreground text-sm truncate">
+																{result.description}
+															</div>
+														</div>
+														<div className="flex items-center gap-2">
+															<Badge variant="secondary" className="text-xs">
+																Web Search
+															</Badge>
+															<ExternalLink className="w-3 h-3 text-muted-foreground" />
+														</div>
+													</CommandItem>
+												);
+											})}
+									</CommandGroup>
+								)}
+
 								{/* AI Search Group */}
 								{debouncedSearchQuery.startsWith("ai:") &&
 									debouncedSearchQuery.slice(3).trim() && (
@@ -339,7 +429,9 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 												.filter((result) => result.type === "ai")
 												.map((result, index) => {
 													const Icon = result.icon;
-													const isSelected = index === selectedIndex;
+													const bookmarkOffset = filteredBookmarks.length > 0 ? filteredBookmarks.slice(0, 6).length : 0;
+													const webSearchOffset = debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:") ? 1 : 0;
+													const adjustedIndex = bookmarkOffset + webSearchOffset + index;
 
 													return (
 														<CommandItem
@@ -385,90 +477,17 @@ export function OmniSearch({ open, onOpenChange }: OmniSearchProps) {
 										</CommandGroup>
 									)}
 
-								{/* Web Search and Bookmarks Group - Now First */}
-								{(debouncedSearchQuery.trim() ||
-									filteredBookmarks.length > 0) && (
-									<CommandGroup
-										heading={
-											debouncedSearchQuery
-												? "Web Search & Bookmarks"
-												: "Bookmarks"
-										}
-									>
-										{searchResults
-											.filter(
-												(result) =>
-													result.type !== "suggestion" && result.type !== "ai"
-											)
-											.map((result, index) => {
-												const Icon = result.icon;
-												const aiOffset =
-													debouncedSearchQuery.startsWith("ai:") &&
-													debouncedSearchQuery.slice(3).trim()
-														? 1
-														: 0;
-												const adjustedIndex = aiOffset + index;
-
-												return (
-													<CommandItem
-														key={result.id}
-														onSelect={() => handleSelect(result)}
-														className="flex items-center gap-3 p-3 cursor-pointer"
-													>
-														<div
-															className="flex justify-center items-center rounded-md w-8 h-8"
-															style={{
-																backgroundColor:
-																	result.color ||
-																	(result.type === "google"
-																		? "#4285f4"
-																		: "#6b7280"),
-																color: "white",
-															}}
-														>
-															<Icon className="w-4 h-4" />
-														</div>
-														<div className="flex-1 min-w-0">
-															<div className="font-medium truncate">
-																{result.title}
-															</div>
-															<div className="text-muted-foreground text-sm truncate">
-																{result.description}
-															</div>
-														</div>
-														<div className="flex items-center gap-2">
-															{result.type === "google" && (
-																<Badge variant="secondary" className="text-xs">
-																	Web Search
-																</Badge>
-															)}
-															{result.type === "bookmark" && (
-																<Badge variant="outline" className="text-xs">
-																	Bookmark
-																</Badge>
-															)}
-															<ExternalLink className="w-3 h-3 text-muted-foreground" />
-														</div>
-													</CommandItem>
-												);
-											})}
-									</CommandGroup>
-								)}
-
-								{/* Smart Suggestions Group - Now Second */}
+								{/* Smart Suggestions Group - Now Last */}
 								{suggestions.length > 0 && (
 									<CommandGroup heading="Smart Suggestions">
 										{searchResults
 											.filter((result) => result.type === "suggestion")
 											.map((result, index) => {
 												const Icon = result.icon;
-												const aiOffset =
-													debouncedSearchQuery.startsWith("ai:") &&
-													debouncedSearchQuery.slice(3).trim()
-														? 1
-														: 0;
+												const bookmarkOffset = filteredBookmarks.length > 0 ? filteredBookmarks.slice(0, 6).length : 0;
 												const webSearchOffset = debouncedSearchQuery.trim() && !debouncedSearchQuery.startsWith("ai:") ? 1 : 0;
-												const adjustedIndex = aiOffset + webSearchOffset + index;
+												const aiOffset = debouncedSearchQuery.startsWith("ai:") && debouncedSearchQuery.slice(3).trim() ? 1 : 0;
+												const adjustedIndex = bookmarkOffset + webSearchOffset + aiOffset + index;
 
 												return (
 													<CommandItem
