@@ -155,7 +155,7 @@ export function FundItem({
 							<>
 								<div className="flex justify-between items-center gap-2 mb-2">
 									<h3 className="font-bold text-lg truncate">{fund.title}</h3>
-									<div className="flex items-center gap-1">
+									<div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity duration-200">
 										<Button
 											variant="ghost"
 											size="sm"

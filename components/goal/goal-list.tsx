@@ -2,11 +2,11 @@
 
 import { Goal } from "@/lib/db";
 import {
-    useCreateGoal,
-    useDeleteGoal,
-    useGoals,
-    useReorderGoals,
-    useUpdateGoal,
+	useCreateGoal,
+	useDeleteGoal,
+	useGoals,
+	useReorderGoals,
+	useUpdateGoal,
 } from "@/lib/hooks/use-goals";
 import { Target } from "lucide-react";
 import { useState } from "react";
@@ -126,7 +126,7 @@ export function GoalList() {
 			/>
 
 			{/* Goals List */}
-			<div className="space-y-4 max-h-[800px] overflow-y-auto">
+			<div className="space-y-4 max-h-[400px] overflow-y-auto">
 				{filteredGoals.length === 0 ? (
 					<div>
 						<div className="p-8 text-center">

@@ -134,8 +134,8 @@ export function GoalItem({
 				<div className="flex flex-col">
 					<div className="flex-1 min-w-0">
 						<div className="flex justify-between items-center gap-2 mb-2">
-							<h3 className="font-bold text-lg truncate">{goal.title}</h3>
-							<div className="flex items-center gap-1">
+							<h3 className="font-bold truncate">{goal.title}</h3>
+							<div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity duration-200">
 								<Button
 									variant="ghost"
 									size="sm"
@@ -156,13 +156,13 @@ export function GoalItem({
 						</div>
 
 						{/* Progress Display */}
-						{goal.amount && (
+						{/* {goal.amount && (
 							<div className="flex items-center gap-1 mb-2 text-muted-foreground text-xs">
 								<span className="font-mono font-semibold text-green-600 dark:text-green-400 text-base">
 									{goal.progress || "0"}/{goal.amount}
 								</span>
 							</div>
-						)}
+						)} */}
 
 						{/* Progress Bar */}
 						{goal.amount && (
